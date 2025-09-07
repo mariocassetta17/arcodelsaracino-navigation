@@ -1136,8 +1136,8 @@ Devi essere SOLO nell'Area Esterna Reception per iniziare la navigazione.
             if (currentZone.name === "Fronte Ristorante") {
                 console.log('🎯 Zona Ristorante rilevata!');
                 
-                // Trova il passo del ristorante (step 1 nell'array)
-                if (currentRoute.steps.length > 1 && currentStep === 0) {
+                // Trova il passo del ristorante (step 1 nell'array) - SENZA controllo currentStep
+                if (currentRoute.steps.length > 1) {
                     const restaurantStep = currentRoute.steps[1]; // Step 1 = istruzione ristorante
                     
                     // Forza il cambio al step del ristorante
@@ -1218,6 +1218,16 @@ Devi essere SOLO nell'Area Esterna Reception per iniziare la navigazione.
             
             // Controlla immediatamente se siamo già in una zona specifica
             checkZoneBasedNavigation();
+            
+            // TEST: Simula l'ingresso nell'area ristorante dopo 5 secondi per test
+            setTimeout(() => {
+                console.log('🧪 TEST: Simulando ingresso area ristorante...');
+                // Simula temporaneamente di essere nell'area ristorante
+                const originalUserLocation = userLocation;
+                userLocation = { lat: 39.851125, lng: 18.193150 }; // Coordinate dentro il ristorante
+                checkZoneBasedNavigation();
+                userLocation = originalUserLocation; // Ripristina posizione originale
+            }, 5000);
         }
 
         function showArrivalMessage() {
@@ -1354,5 +1364,5 @@ La navigazione è BLOCCATA se non sei SOLO nell'Area Esterna Reception!
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9f39e83d0c4e2',t:'MTc1NzI4NzM4Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9f68404b6c4e2',t:'MTc1NzI4NzUwMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
