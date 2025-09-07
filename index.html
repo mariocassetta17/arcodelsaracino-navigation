@@ -1129,26 +1129,42 @@ Devi essere SOLO nell'Area Esterna Reception per iniziare la navigazione.
             const currentZone = detectCurrentZone();
             if (!currentZone) return;
             
-            // Trova il passo corrispondente alla zona attuale
-            const zoneStep = currentRoute.steps.find(step => step.zone === getZoneKey(currentZone));
+            // Debug: log della zona rilevata
+            console.log('🎯 Zona rilevata:', currentZone.name);
             
-            if (zoneStep && currentRoute.steps[currentStep] !== zoneStep) {
-                // Aggiorna automaticamente al passo corretto per la zona
-                const stepIndex = currentRoute.steps.indexOf(zoneStep);
-                if (stepIndex !== -1 && stepIndex !== currentStep) {
-                    currentStep = stepIndex;
-                    updateNavigation();
+            // Controllo specifico per l'area ristorante durante la navigazione
+            if (currentZone === resortZones.restaurant) {
+                console.log('🎯 Zona Ristorante rilevata!');
+                
+                // Trova il passo del ristorante (step 1 nell'array)
+                if (currentRoute.steps.length > 1) {
+                    const restaurantStep = currentRoute.steps[1]; // Step 1 = istruzione ristorante
                     
-                    // Aggiorna l'istruzione corrente senza mostrare alert
-                    const currentInstruction = document.getElementById('currentInstruction');
-                    currentInstruction.innerHTML = `
-                        <div class="instruction-icon">${zoneStep.icon}</div>
-                        <div class="instruction-text">${zoneStep.text}</div>
-                        <div class="instruction-distance">${zoneStep.distance}</div>
-                    `;
-                    
-                    if (voiceEnabled) {
-                        speakInstruction(zoneStep.text);
+                    if (restaurantStep && currentStep !== 1) {
+                        currentStep = 1;
+                        
+                        // Aggiorna DIRETTAMENTE il grande rettangolo blu principale
+                        const currentInstruction = document.getElementById('currentInstruction');
+                        currentInstruction.innerHTML = `
+                            <div class="instruction-icon">🍽️</div>
+                            <div class="instruction-text">${restaurantStep.text}</div>
+                            <div class="instruction-distance">${restaurantStep.distance}</div>
+                        `;
+                        
+                        // Aggiorna la barra di progresso
+                        const progress = ((currentStep + 1) / currentRoute.steps.length) * 100;
+                        document.getElementById('progressFill').style.width = `${progress}%`;
+                        
+                        // Aggiorna i prossimi passi
+                        updateNextSteps();
+                        
+                        // Audio se abilitato
+                        if (voiceEnabled) {
+                            speakInstruction(restaurantStep.text);
+                        }
+                        
+                        // Mostra alert di conferma
+                        showZoneNavigationAlert(restaurantStep);
                     }
                 }
             }
@@ -1338,5 +1354,5 @@ La navigazione è BLOCCATA se non sei SOLO nell'Area Esterna Reception!
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9dd4b1749c4e2',t:'MTc1NzI4NjQ2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9f074d348edb3',t:'MTc1NzI4NzI1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
