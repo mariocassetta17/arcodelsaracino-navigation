@@ -480,18 +480,13 @@
                 <div id="gpsStatusText">Richiesta accesso GPS...</div>
             </div>
 
-            <div class="location-info" id="locationInfo">
+            <div class="location-info" id="locationInfo" style="display: none;">
                 <h4>📍 Posizione GPS attuale</h4>
                 <div class="coordinates" id="coordinates">Lat: -, Lng: -</div>
                 <div id="currentZone">Zona: Rilevamento in corso...</div>
                 <div style="font-size: 0.8em; color: #718096; margin-top: 8px;">
                     Precisione: <span id="accuracy">-</span>m
                 </div>
-            </div>
-
-            <div class="zone-alert" id="zoneAlert">
-                <div style="font-size: 1.5em; margin-bottom: 10px;">🚨</div>
-                <div id="zoneAlertText">Sei entrato in una nuova zona!</div>
             </div>
 
             <div class="error-message" id="errorMessage"></div>
@@ -826,12 +821,13 @@
             const currentZone = document.getElementById('currentZone');
             const accuracy = document.getElementById('accuracy');
             
-            locationInfo.style.display = 'block';
-            coordinates.textContent = `Lat: ${userLocation.lat.toFixed(6)}, Lng: ${userLocation.lng.toFixed(6)}`;
-            accuracy.textContent = Math.round(userLocation.accuracy || 0);
+            // Non mostrare più le informazioni di posizione
+            // locationInfo.style.display = 'block';
             
             const zone = detectCurrentZone();
-            currentZone.textContent = `Zona: ${zone ? zone.name : 'Zona non riconosciuta'}`;
+            if (currentZone) {
+                currentZone.textContent = `Zona: ${zone ? zone.name : 'Zona non riconosciuta'}`;
+            }
             
             // Controlla l'accesso all'input
             updateInputAccess();
@@ -991,13 +987,10 @@
             
             if (currentZone && currentZone !== lastTriggeredZone) {
                 lastTriggeredZone = currentZone;
-                showZoneAlert(currentZone);
                 
                 // Se siamo in navigazione, controlla le istruzioni specifiche per zona
                 if (currentRoute) {
                     checkZoneBasedNavigation();
-                } else if (voiceEnabled) {
-                    speakInstruction(currentZone.message);
                 }
             }
         }
@@ -1147,8 +1140,17 @@ Devi essere in una delle AREE AUTORIZZATE per iniziare la navigazione.
                     currentStep = stepIndex;
                     updateNavigation();
                     
-                    // Mostra notifica di cambio zona
-                    showZoneNavigationAlert(zoneStep);
+                    // Aggiorna l'istruzione corrente senza mostrare alert
+                    const currentInstruction = document.getElementById('currentInstruction');
+                    currentInstruction.innerHTML = `
+                        <div class="instruction-icon">${zoneStep.icon}</div>
+                        <div class="instruction-text">${zoneStep.text}</div>
+                        <div class="instruction-distance">${zoneStep.distance}</div>
+                    `;
+                    
+                    if (voiceEnabled) {
+                        speakInstruction(zoneStep.text);
+                    }
                 }
             }
         }
@@ -1339,5 +1341,5 @@ La navigazione è BLOCCATA se non sei in un'area autorizzata!
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9ca6da08ac4e2',t:'MTc1NzI4NTY5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9d39821e1c4e2',t:'MTc1NzI4NjA3MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
