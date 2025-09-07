@@ -5,23 +5,37 @@
   <title>Guida al villaggio</title>
 </head>
 <body>
-  <h2>Indicazioni per raggiungere l'appartamento</h2>
-  <div id="output">Attivazione GPS in corso...</div>
+  <h2>Guida al tuo appartamento</h2>
+  
+  <div id="inputDiv">
+    <label for="aptNumber">Inserisci numero appartamento:</label>
+    <input type="text" id="aptNumber">
+    <button onclick="startRoute()">Inizia</button>
+  </div>
+
+  <div id="output">Attendi...</div>
 
   <script>
-    // Lista dei punti con coordinate e istruzione
-    const checkpoints = [
-      {lat: 41.1234, lng: 12.1234, msg: "Sei al cancello principale, gira a sinistra."},
-      {lat: 41.1240, lng: 12.1240, msg: "Alla rotonda, prendi la seconda uscita."},
-      {lat: 41.1250, lng: 12.1250, msg: "Arrivato al palazzo A, l'appartamento è al piano 2."}
-    ];
-
-    // Raggio di tolleranza in metri
-    const RADIUS = 20;
-
+    let checkpoints = [];
+    const RADIUS = 20; // metri
     let currentStep = 0;
 
-    // Calcola distanza tra due coordinate (formula dell’haversine)
+    // Definizione dei checkpoint per appartamenti diversi
+    const apartments = {
+      "101": [
+        {lat: 41.22880, lng: 16.30620, msg: "Sei al cancello principale, gira a sinistra."},
+        {lat: 41.22890, lng: 16.30630, msg: "Alla fontana, prosegui dritto."},
+        {lat: 41.22900, lng: 16.30640, msg: "Arrivato al palazzo 101, appartamento al piano 2."}
+      ],
+      "102": [
+        {lat: 41.22880, lng: 16.30620, msg: "Sei al cancello principale, gira a destra."},
+        {lat: 41.22885, lng: 16.30625, msg: "Prosegui fino all’albero grande, poi gira a sinistra."},
+        {lat: 41.22895, lng: 16.30635, msg: "Arrivato al palazzo 102, appartamento al piano 1."}
+      ]
+      // puoi aggiungere altri appartamenti qui
+    };
+
+    // Calcola distanza tra due coordinate
     function distance(lat1, lon1, lat2, lon2) {
       const R = 6371e3; // metri
       const toRad = x => x * Math.PI / 180;
@@ -35,38 +49,50 @@
       return R * c;
     }
 
-    // Sintesi vocale
     function speak(text) {
       const utter = new SpeechSynthesisUtterance(text);
       speechSynthesis.speak(utter);
     }
 
-    // Monitor GPS
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(pos => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        document.getElementById("output").innerText =
-          `Posizione attuale: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    function startRoute() {
+      const apt = document.getElementById("aptNumber").value.trim();
+      if (!apartments[apt]) {
+        document.getElementById("output").innerText = "Appartamento non trovato!";
+        return;
+      }
 
-        if (currentStep < checkpoints.length) {
-          const cp = checkpoints[currentStep];
-          const dist = distance(lat, lng, cp.lat, cp.lng);
+      checkpoints = apartments[apt];
+      currentStep = 0;
+      document.getElementById("inputDiv").style.display = "none";
+      document.getElementById("output").innerText = "Attiva GPS e segui le istruzioni...";
 
-          if (dist < RADIUS) {
-            document.getElementById("output").innerText = cp.msg;
-            speak(cp.msg);
-            currentStep++;
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          document.getElementById("output").innerText =
+            `Posizione attuale: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+          if (currentStep < checkpoints.length) {
+            const cp = checkpoints[currentStep];
+            const dist = distance(lat, lng, cp.lat, cp.lng);
+            if (dist < RADIUS) {
+              document.getElementById("output").innerText = cp.msg;
+              speak(cp.msg);
+              currentStep++;
+            }
+          } else {
+            document.getElementById("output").innerText = "Sei arrivato a destinazione!";
+            speak("Sei arrivato a destinazione!");
           }
-        }
-      }, err => {
-        document.getElementById("output").innerText = "Errore GPS: " + err.message;
-      }, {enableHighAccuracy: true});
-    } else {
-      document.getElementById("output").innerText = "GPS non supportato.";
+
+        }, err => {
+          document.getElementById("output").innerText = "Errore GPS: " + err.message;
+        }, {enableHighAccuracy: true});
+      } else {
+        document.getElementById("output").innerText = "GPS non supportato.";
+      }
     }
   </script>
 </body>
 </html>
-
-Aggiunto index.html con web app guida villaggio
