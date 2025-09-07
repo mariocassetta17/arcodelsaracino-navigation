@@ -985,14 +985,25 @@
         function checkZoneEntry() {
             const currentZone = detectCurrentZone();
             
-            // Durante la navigazione, controlla SEMPRE i cambi di zona
+            // Durante la navigazione, controlla SEMPRE i cambi di zona AD OGNI AGGIORNAMENTO GPS
             if (currentRoute) {
+                // Log per debug
+                console.log('🔄 Controllo zone - Zona attuale:', currentZone ? currentZone.name : 'Nessuna');
+                console.log('🔄 Step corrente:', currentStep);
+                
+                // CONTROLLO AGGRESSIVO: Se sei nell'area ristorante, forza il cambio IMMEDIATAMENTE
+                if (currentZone && currentZone.name === "Fronte Ristorante" && currentStep !== 1) {
+                    console.log('🚨 RILEVATO RISTORANTE - FORZANDO CAMBIO IMMEDIATO!');
+                    forceRestaurantStep();
+                }
+                
                 checkZoneBasedNavigation();
             }
             
             // Aggiorna la zona solo se è diversa
             if (currentZone && currentZone !== lastTriggeredZone) {
                 lastTriggeredZone = currentZone;
+                console.log('📍 Nuova zona rilevata:', currentZone.name);
             }
         }
 
@@ -1123,6 +1134,42 @@ Devi essere SOLO nell'Area Esterna Reception per iniziare la navigazione.
             }
         }
 
+        // Funzione per forzare il cambio al step ristorante
+        function forceRestaurantStep() {
+            if (!currentRoute || currentRoute.steps.length <= 1) return;
+            
+            const restaurantStep = currentRoute.steps[1]; // Step 1 = istruzione ristorante
+            
+            // Forza il cambio al step del ristorante
+            currentStep = 1;
+            
+            console.log('🍽️ FORZANDO step ristorante:', restaurantStep.text);
+            
+            // Aggiorna IMMEDIATAMENTE il grande rettangolo blu principale
+            const currentInstruction = document.getElementById('currentInstruction');
+            currentInstruction.innerHTML = `
+                <div class="instruction-icon">🍽️</div>
+                <div class="instruction-text">${restaurantStep.text}</div>
+                <div class="instruction-distance">${restaurantStep.distance}</div>
+            `;
+            
+            // Aggiorna la barra di progresso al 50%
+            document.getElementById('progressFill').style.width = '50%';
+            
+            // Aggiorna i prossimi passi
+            updateNextSteps();
+            
+            // Audio se abilitato
+            if (voiceEnabled) {
+                speakInstruction(restaurantStep.text);
+            }
+            
+            // Mostra alert di conferma IMMEDIATO
+            showZoneNavigationAlert(restaurantStep);
+            
+            console.log('✅ STEP RISTORANTE FORZATO CON SUCCESSO!');
+        }
+
         // Sistema di navigazione basato su zone GPS
         function checkZoneBasedNavigation() {
             if (!currentRoute || !userLocation) return;
@@ -1227,6 +1274,33 @@ Devi essere SOLO nell'Area Esterna Reception per iniziare la navigazione.
             checkZoneBasedNavigation();
             
             console.log('🧭 Navigazione GPS attiva - Il sistema rileverà automaticamente quando entri nelle zone');
+            
+            // TEST AUTOMATICO: Simula l'ingresso nell'area ristorante dopo 3 secondi
+            setTimeout(() => {
+                console.log('🧪 TEST: Simulando ingresso nell\'area ristorante...');
+                
+                // Salva la posizione originale
+                const originalLocation = userLocation;
+                
+                // Simula di essere nell'area ristorante (coordinate dentro il poligono)
+                userLocation = { 
+                    lat: 39.851125, 
+                    lng: 18.193150,
+                    accuracy: 5,
+                    speed: 0
+                };
+                
+                // Forza il controllo delle zone
+                console.log('🧪 Forzando controllo zone con posizione simulata...');
+                checkZoneEntry();
+                
+                // Ripristina la posizione originale dopo 2 secondi
+                setTimeout(() => {
+                    userLocation = originalLocation;
+                    console.log('🧪 Test completato - posizione ripristinata');
+                }, 2000);
+                
+            }, 3000);
         }
 
         function showArrivalMessage() {
@@ -1363,5 +1437,5 @@ La navigazione è BLOCCATA se non sei SOLO nell'Area Esterna Reception!
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9fc506780c4e2',t:'MTc1NzI4NzczOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ba00e227afedb3',t:'MTc1NzI4NzkyNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
