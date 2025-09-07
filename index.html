@@ -495,7 +495,7 @@
                 <label for="apartmentNumber">Inserisci il numero dell'appartamento:</label>
                 <input type="number" id="apartmentNumber" placeholder="es. 150" min="101" max="314" disabled>
                 <div id="inputWarning" style="margin-top: 8px; padding: 10px; background: #fed7d7; color: #c53030; border-radius: 8px; font-size: 0.9em; display: block;">
-                    🚫 Devi essere nell'Area Esterna Reception o Fronte Ristorante per inserire l'appartamento
+                    🚫 Devi essere SOLO nell'Area Esterna Reception per inserire l'appartamento
                 </div>
             </div>
 
@@ -838,23 +838,23 @@
             const inputWarning = document.getElementById('inputWarning');
             const startBtn = document.getElementById('startBtn');
             
-            const isInAuthorizedArea = isUserInAuthorizedArea();
+            const isInReceptionArea = isUserInReceptionArea();
             
-            if (isInAuthorizedArea) {
-                // Utente in area autorizzata - abilita input
+            if (isInReceptionArea) {
+                // Utente nell'area reception - abilita input
                 apartmentInput.disabled = false;
                 apartmentInput.placeholder = "es. 150";
                 inputWarning.style.display = 'none';
                 startBtn.disabled = false;
                 startBtn.textContent = '🧭 Inizia Navigazione';
             } else {
-                // Utente fuori dalle aree autorizzate - disabilita input
+                // Utente fuori dall'area reception - disabilita input
                 apartmentInput.disabled = true;
                 apartmentInput.value = '';
-                apartmentInput.placeholder = "Accesso limitato - vai alla Reception o Ristorante";
+                apartmentInput.placeholder = "Accesso limitato - vai SOLO all'Area Esterna Reception";
                 inputWarning.style.display = 'block';
                 startBtn.disabled = true;
-                startBtn.textContent = '🚫 Area Autorizzata Richiesta';
+                startBtn.textContent = '🚫 Solo Area Reception Autorizzata';
             }
         }
 
@@ -1028,21 +1028,20 @@
                 return;
             }
 
-            // CONTROLLO RIGOROSO: Devi essere in un'area autorizzata
+            // CONTROLLO RIGOROSO: Devi essere SOLO nell'area reception
             const currentZone = detectCurrentZone();
-            const isInAuthorizedArea = isUserInAuthorizedArea();
+            const isInReceptionArea = isUserInReceptionArea();
             
-            if (!isInAuthorizedArea) {
+            if (!isInReceptionArea) {
                 showError(`🚫 ACCESSO NEGATO! 
                 
-Devi essere in una delle AREE AUTORIZZATE per iniziare la navigazione.
+Devi essere SOLO nell'Area Esterna Reception per iniziare la navigazione.
                 
 📍 Posizione attuale: ${currentZone ? currentZone.name : 'Zona sconosciuta'}
-📐 Aree autorizzate: 
+📐 Area autorizzata UNICA: 
    • Area Esterna Reception (39°51'04.0"N 18°11'36.2"E)
-   • Fronte Ristorante (39°51'04.6"N 18°11'35.4"E)
 
-🚶‍♂️ Recati in una delle aree autorizzate e riprova!`);
+🚶‍♂️ Recati SOLO nell'area esterna della Reception e riprova!`);
                 return;
             }
 
@@ -1280,23 +1279,21 @@ Devi essere in una delle AREE AUTORIZZATE per iniziare la navigazione.
         function showHelp() {
             alert(`🏖️ VILLA RESORT GPS NAVIGATOR
 
-🚫 CONTROLLO ACCESSO RIGOROSO:
-La navigazione è BLOCCATA se non sei in un'area autorizzata!
+🚫 CONTROLLO ACCESSO ULTRA-RIGOROSO:
+La navigazione è BLOCCATA se non sei SOLO nell'Area Esterna Reception!
 
 🎯 PROCEDURA OBBLIGATORIA:
-1. Vai FISICAMENTE in una delle AREE AUTORIZZATE:
-   • Area Esterna Reception
-   • Fronte Ristorante
+1. Vai FISICAMENTE SOLO nell'AREA ESTERNA RECEPTION
 2. Attendi che il GPS rilevi la tua posizione
-3. Verifica che mostri una delle zone autorizzate
+3. Verifica che mostri "Area Esterna Reception"
 4. Solo allora inserisci il numero appartamento
 5. Clicca "Inizia Navigazione"
 
-⚠️ SISTEMA DI SICUREZZA POLIGONALE:
-• AREA 1 - Reception: 39°51'04.0"N 18°11'36.2"E (+ altre 3 coordinate)
-• AREA 2 - Ristorante: 39°51'04.6"N 18°11'35.4"E (+ altre 4 coordinate)
+⚠️ SISTEMA DI SICUREZZA POLIGONALE ESCLUSIVO:
+• UNICA AREA AUTORIZZATA - Reception: 39°51'04.0"N 18°11'36.2"E (+ altre 3 coordinate)
+• Il Fronte Ristorante NON è più autorizzato per l'inserimento appartamento
 • Controllo GPS in tempo reale
-• Accesso negato se fuori dai poligoni esatti
+• Accesso negato se fuori dal poligono esatto della Reception
 • Rilevamento automatico della posizione
 
 🏢 APPARTAMENTI DISPONIBILI:
@@ -1304,7 +1301,7 @@ La navigazione è BLOCCATA se non sei in un'area autorizzata!
 • 258, 260 (Torre Esclusiva - VIP)
 • 302-314 (solo pari - Attico Luxury)
 
-📍 Se il sistema ti blocca, significa che NON sei dentro uno dei poligoni autorizzati!
+📍 Se il sistema ti blocca, significa che NON sei dentro il poligono della Reception!
 
 📞 Assistenza: +39 123 456 789`);
         }
@@ -1341,5 +1338,5 @@ La navigazione è BLOCCATA se non sei in un'area autorizzata!
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9d968368ac4e2',t:'MTc1NzI4NjMwOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9dd4b1749c4e2',t:'MTc1NzI4NjQ2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
