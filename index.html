@@ -985,13 +985,14 @@
         function checkZoneEntry() {
             const currentZone = detectCurrentZone();
             
+            // Durante la navigazione, controlla SEMPRE i cambi di zona
+            if (currentRoute) {
+                checkZoneBasedNavigation();
+            }
+            
+            // Aggiorna la zona solo se è diversa
             if (currentZone && currentZone !== lastTriggeredZone) {
                 lastTriggeredZone = currentZone;
-                
-                // Se siamo in navigazione, controlla le istruzioni specifiche per zona
-                if (currentRoute) {
-                    checkZoneBasedNavigation();
-                }
             }
         }
 
@@ -1127,23 +1128,29 @@ Devi essere SOLO nell'Area Esterna Reception per iniziare la navigazione.
             if (!currentRoute || !userLocation) return;
             
             const currentZone = detectCurrentZone();
-            if (!currentZone) return;
             
             // Debug: log della zona rilevata
-            console.log('🎯 Zona rilevata:', currentZone.name);
+            console.log('🎯 Zona attuale:', currentZone ? currentZone.name : 'Nessuna zona');
             
-            // Controllo specifico per l'area ristorante durante la navigazione
-            if (currentZone.name === "Fronte Ristorante") {
-                console.log('🎯 Zona Ristorante rilevata!');
+            // APPENA ESCI DALLA RECEPTION: vai al primo step di movimento
+            if (currentZone && currentZone.name !== "Area Esterna Reception" && currentStep === 0) {
+                console.log('🚶‍♂️ Uscito dalla Reception - Attivando primo step');
+                currentStep = 0; // Mantieni il primo step (uscita reception)
+                updateNavigation();
+            }
+            
+            // APPENA ENTRI NEL RISTORANTE: cambia immediatamente al step ristorante
+            if (currentZone && currentZone.name === "Fronte Ristorante") {
+                console.log('🍽️ ENTRATO nell\'area ristorante - Cambio immediato!');
                 
-                // Trova il passo del ristorante (step 1 nell'array) - SENZA controllo currentStep
+                // Trova il passo del ristorante (step 1 nell'array)
                 if (currentRoute.steps.length > 1) {
                     const restaurantStep = currentRoute.steps[1]; // Step 1 = istruzione ristorante
                     
                     // Forza il cambio al step del ristorante
                     currentStep = 1;
                     
-                    // Aggiorna DIRETTAMENTE il grande rettangolo blu principale
+                    // Aggiorna IMMEDIATAMENTE il grande rettangolo blu principale
                     const currentInstruction = document.getElementById('currentInstruction');
                     currentInstruction.innerHTML = `
                         <div class="instruction-icon">🍽️</div>
@@ -1162,10 +1169,10 @@ Devi essere SOLO nell'Area Esterna Reception per iniziare la navigazione.
                         speakInstruction(restaurantStep.text);
                     }
                     
-                    // Mostra alert di conferma
+                    // Mostra alert di conferma IMMEDIATO
                     showZoneNavigationAlert(restaurantStep);
                     
-                    console.log('✅ Istruzione ristorante aggiornata nel rettangolo blu!');
+                    console.log('✅ CAMBIO IMMEDIATO - Istruzione ristorante attiva!');
                 }
             }
         }
@@ -1214,20 +1221,12 @@ Devi essere SOLO nell'Area Esterna Reception per iniziare la navigazione.
         function startNavigationSimulation() {
             // La navigazione ora è completamente basata su GPS e zone
             // Non c'è più progressione automatica temporizzata
-            // Le istruzioni cambiano solo quando l'utente entra fisicamente nelle zone GPS
+            // Le istruzioni cambiano IMMEDIATAMENTE quando l'utente entra fisicamente nelle zone GPS
             
             // Controlla immediatamente se siamo già in una zona specifica
             checkZoneBasedNavigation();
             
-            // TEST: Simula l'ingresso nell'area ristorante dopo 5 secondi per test
-            setTimeout(() => {
-                console.log('🧪 TEST: Simulando ingresso area ristorante...');
-                // Simula temporaneamente di essere nell'area ristorante
-                const originalUserLocation = userLocation;
-                userLocation = { lat: 39.851125, lng: 18.193150 }; // Coordinate dentro il ristorante
-                checkZoneBasedNavigation();
-                userLocation = originalUserLocation; // Ripristina posizione originale
-            }, 5000);
+            console.log('🧭 Navigazione GPS attiva - Il sistema rileverà automaticamente quando entri nelle zone');
         }
 
         function showArrivalMessage() {
@@ -1364,5 +1363,5 @@ La navigazione è BLOCCATA se non sei SOLO nell'Area Esterna Reception!
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9f68404b6c4e2',t:'MTc1NzI4NzUwMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9fc506780c4e2',t:'MTc1NzI4NzczOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
