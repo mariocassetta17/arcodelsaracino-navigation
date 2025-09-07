@@ -6,93 +6,1067 @@
 </head>
 <body>
   <h2>Guida al tuo appartamento</h2>
-  
   <div id="inputDiv">
     <label for="aptNumber">Inserisci numero appartamento:</label>
     <input type="text" id="aptNumber">
     <button onclick="startRoute()">Inizia</button>
   </div>
-
   <div id="output">Attendi...</div>
-
   <script>
     let checkpoints = [];
-    const RADIUS = 20; // metri
+    const RADIUS = 20;
     let currentStep = 0;
+    const apartments = {};
+apartments["101"] = [
+  {lat: 41.2281/100 + 0.00101, lng: 16.3061/100 + 0.00101, msg: "Messaggio provvisorio appartamento 101 - punto 1"},
+  {lat: 41.2281/100 + 0.00101, lng: 16.3061/100 + 0.00101, msg: "Messaggio provvisorio appartamento 101 - punto 2"},
+  {lat: 41.2281/100 + 0.00101, lng: 16.3061/100 + 0.00101, msg: "Messaggio provvisorio appartamento 101 - punto 3"},
+];
 
-    // Definizione dei checkpoint per appartamenti diversi
-    const apartments = {
-      "101": [
-        {lat: 41.22880, lng: 16.30620, msg: "Sei al cancello principale, gira a sinistra."},
-        {lat: 41.22890, lng: 16.30630, msg: "Alla fontana, prosegui dritto."},
-        {lat: 41.22900, lng: 16.30640, msg: "Arrivato al palazzo 101, appartamento al piano 2."}
-      ],
-      "102": [
-        {lat: 41.22880, lng: 16.30620, msg: "Sei al cancello principale, gira a destra."},
-        {lat: 41.22885, lng: 16.30625, msg: "Prosegui fino all’albero grande, poi gira a sinistra."},
-        {lat: 41.22895, lng: 16.30635, msg: "Arrivato al palazzo 102, appartamento al piano 1."}
-      ]
-      // puoi aggiungere altri appartamenti qui
-    };
+apartments["102"] = [
+  {lat: 41.2282/100 + 0.00102, lng: 16.3062/100 + 0.00102, msg: "Messaggio provvisorio appartamento 102 - punto 1"},
+  {lat: 41.2282/100 + 0.00102, lng: 16.3062/100 + 0.00102, msg: "Messaggio provvisorio appartamento 102 - punto 2"},
+  {lat: 41.2282/100 + 0.00102, lng: 16.3062/100 + 0.00102, msg: "Messaggio provvisorio appartamento 102 - punto 3"},
+];
 
-    // Calcola distanza tra due coordinate
-    function distance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3; // metri
-      const toRad = x => x * Math.PI / 180;
-      const φ1 = toRad(lat1), φ2 = toRad(lat2);
-      const Δφ = toRad(lat2 - lat1);
-      const Δλ = toRad(lon2 - lon1);
-      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ/2) * Math.sin(Δλ/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
-    }
+apartments["103"] = [
+  {lat: 41.2283/100 + 0.00103, lng: 16.3063/100 + 0.00103, msg: "Messaggio provvisorio appartamento 103 - punto 1"},
+  {lat: 41.2283/100 + 0.00103, lng: 16.3063/100 + 0.00103, msg: "Messaggio provvisorio appartamento 103 - punto 2"},
+  {lat: 41.2283/100 + 0.00103, lng: 16.3063/100 + 0.00103, msg: "Messaggio provvisorio appartamento 103 - punto 3"},
+];
 
-    function speak(text) {
-      const utter = new SpeechSynthesisUtterance(text);
-      speechSynthesis.speak(utter);
-    }
+apartments["104"] = [
+  {lat: 41.2284/100 + 0.00104, lng: 16.3064/100 + 0.00104, msg: "Messaggio provvisorio appartamento 104 - punto 1"},
+  {lat: 41.2284/100 + 0.00104, lng: 16.3064/100 + 0.00104, msg: "Messaggio provvisorio appartamento 104 - punto 2"},
+  {lat: 41.2284/100 + 0.00104, lng: 16.3064/100 + 0.00104, msg: "Messaggio provvisorio appartamento 104 - punto 3"},
+];
 
-    function startRoute() {
-      const apt = document.getElementById("aptNumber").value.trim();
-      if (!apartments[apt]) {
-        document.getElementById("output").innerText = "Appartamento non trovato!";
-        return;
-      }
+apartments["105"] = [
+  {lat: 41.2285/100 + 0.00105, lng: 16.3065/100 + 0.00105, msg: "Messaggio provvisorio appartamento 105 - punto 1"},
+  {lat: 41.2285/100 + 0.00105, lng: 16.3065/100 + 0.00105, msg: "Messaggio provvisorio appartamento 105 - punto 2"},
+  {lat: 41.2285/100 + 0.00105, lng: 16.3065/100 + 0.00105, msg: "Messaggio provvisorio appartamento 105 - punto 3"},
+];
 
-      checkpoints = apartments[apt];
-      currentStep = 0;
-      document.getElementById("inputDiv").style.display = "none";
-      document.getElementById("output").innerText = "Attiva GPS e segui le istruzioni...";
+apartments["106"] = [
+  {lat: 41.2286/100 + 0.00106, lng: 16.3066/100 + 0.00106, msg: "Messaggio provvisorio appartamento 106 - punto 1"},
+  {lat: 41.2286/100 + 0.00106, lng: 16.3066/100 + 0.00106, msg: "Messaggio provvisorio appartamento 106 - punto 2"},
+  {lat: 41.2286/100 + 0.00106, lng: 16.3066/100 + 0.00106, msg: "Messaggio provvisorio appartamento 106 - punto 3"},
+];
 
-      if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(pos => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          document.getElementById("output").innerText =
-            `Posizione attuale: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+apartments["107"] = [
+  {lat: 41.2287/100 + 0.00107, lng: 16.3067/100 + 0.00107, msg: "Messaggio provvisorio appartamento 107 - punto 1"},
+  {lat: 41.2287/100 + 0.00107, lng: 16.3067/100 + 0.00107, msg: "Messaggio provvisorio appartamento 107 - punto 2"},
+  {lat: 41.2287/100 + 0.00107, lng: 16.3067/100 + 0.00107, msg: "Messaggio provvisorio appartamento 107 - punto 3"},
+];
 
-          if (currentStep < checkpoints.length) {
-            const cp = checkpoints[currentStep];
-            const dist = distance(lat, lng, cp.lat, cp.lng);
-            if (dist < RADIUS) {
-              document.getElementById("output").innerText = cp.msg;
-              speak(cp.msg);
-              currentStep++;
-            }
-          } else {
-            document.getElementById("output").innerText = "Sei arrivato a destinazione!";
-            speak("Sei arrivato a destinazione!");
-          }
+apartments["108"] = [
+  {lat: 41.2288/100 + 0.00108, lng: 16.3068/100 + 0.00108, msg: "Messaggio provvisorio appartamento 108 - punto 1"},
+  {lat: 41.2288/100 + 0.00108, lng: 16.3068/100 + 0.00108, msg: "Messaggio provvisorio appartamento 108 - punto 2"},
+  {lat: 41.2288/100 + 0.00108, lng: 16.3068/100 + 0.00108, msg: "Messaggio provvisorio appartamento 108 - punto 3"},
+];
 
-        }, err => {
-          document.getElementById("output").innerText = "Errore GPS: " + err.message;
-        }, {enableHighAccuracy: true});
+apartments["109"] = [
+  {lat: 41.2289/100 + 0.00109, lng: 16.3069/100 + 0.00109, msg: "Messaggio provvisorio appartamento 109 - punto 1"},
+  {lat: 41.2289/100 + 0.00109, lng: 16.3069/100 + 0.00109, msg: "Messaggio provvisorio appartamento 109 - punto 2"},
+  {lat: 41.2289/100 + 0.00109, lng: 16.3069/100 + 0.00109, msg: "Messaggio provvisorio appartamento 109 - punto 3"},
+];
+
+apartments["110"] = [
+  {lat: 41.22810/100 + 0.00110, lng: 16.30610/100 + 0.00110, msg: "Messaggio provvisorio appartamento 110 - punto 1"},
+  {lat: 41.22810/100 + 0.00110, lng: 16.30610/100 + 0.00110, msg: "Messaggio provvisorio appartamento 110 - punto 2"},
+  {lat: 41.22810/100 + 0.00110, lng: 16.30610/100 + 0.00110, msg: "Messaggio provvisorio appartamento 110 - punto 3"},
+];
+
+apartments["111"] = [
+  {lat: 41.22811/100 + 0.00111, lng: 16.30611/100 + 0.00111, msg: "Messaggio provvisorio appartamento 111 - punto 1"},
+  {lat: 41.22811/100 + 0.00111, lng: 16.30611/100 + 0.00111, msg: "Messaggio provvisorio appartamento 111 - punto 2"},
+  {lat: 41.22811/100 + 0.00111, lng: 16.30611/100 + 0.00111, msg: "Messaggio provvisorio appartamento 111 - punto 3"},
+];
+
+apartments["112"] = [
+  {lat: 41.22812/100 + 0.00112, lng: 16.30612/100 + 0.00112, msg: "Messaggio provvisorio appartamento 112 - punto 1"},
+  {lat: 41.22812/100 + 0.00112, lng: 16.30612/100 + 0.00112, msg: "Messaggio provvisorio appartamento 112 - punto 2"},
+  {lat: 41.22812/100 + 0.00112, lng: 16.30612/100 + 0.00112, msg: "Messaggio provvisorio appartamento 112 - punto 3"},
+];
+
+apartments["113"] = [
+  {lat: 41.22813/100 + 0.00113, lng: 16.30613/100 + 0.00113, msg: "Messaggio provvisorio appartamento 113 - punto 1"},
+  {lat: 41.22813/100 + 0.00113, lng: 16.30613/100 + 0.00113, msg: "Messaggio provvisorio appartamento 113 - punto 2"},
+  {lat: 41.22813/100 + 0.00113, lng: 16.30613/100 + 0.00113, msg: "Messaggio provvisorio appartamento 113 - punto 3"},
+];
+
+apartments["114"] = [
+  {lat: 41.22814/100 + 0.00114, lng: 16.30614/100 + 0.00114, msg: "Messaggio provvisorio appartamento 114 - punto 1"},
+  {lat: 41.22814/100 + 0.00114, lng: 16.30614/100 + 0.00114, msg: "Messaggio provvisorio appartamento 114 - punto 2"},
+  {lat: 41.22814/100 + 0.00114, lng: 16.30614/100 + 0.00114, msg: "Messaggio provvisorio appartamento 114 - punto 3"},
+];
+
+apartments["115"] = [
+  {lat: 41.22815/100 + 0.00115, lng: 16.30615/100 + 0.00115, msg: "Messaggio provvisorio appartamento 115 - punto 1"},
+  {lat: 41.22815/100 + 0.00115, lng: 16.30615/100 + 0.00115, msg: "Messaggio provvisorio appartamento 115 - punto 2"},
+  {lat: 41.22815/100 + 0.00115, lng: 16.30615/100 + 0.00115, msg: "Messaggio provvisorio appartamento 115 - punto 3"},
+];
+
+apartments["116"] = [
+  {lat: 41.22816/100 + 0.00116, lng: 16.30616/100 + 0.00116, msg: "Messaggio provvisorio appartamento 116 - punto 1"},
+  {lat: 41.22816/100 + 0.00116, lng: 16.30616/100 + 0.00116, msg: "Messaggio provvisorio appartamento 116 - punto 2"},
+  {lat: 41.22816/100 + 0.00116, lng: 16.30616/100 + 0.00116, msg: "Messaggio provvisorio appartamento 116 - punto 3"},
+];
+
+apartments["117"] = [
+  {lat: 41.22817/100 + 0.00117, lng: 16.30617/100 + 0.00117, msg: "Messaggio provvisorio appartamento 117 - punto 1"},
+  {lat: 41.22817/100 + 0.00117, lng: 16.30617/100 + 0.00117, msg: "Messaggio provvisorio appartamento 117 - punto 2"},
+  {lat: 41.22817/100 + 0.00117, lng: 16.30617/100 + 0.00117, msg: "Messaggio provvisorio appartamento 117 - punto 3"},
+];
+
+apartments["118"] = [
+  {lat: 41.22818/100 + 0.00118, lng: 16.30618/100 + 0.00118, msg: "Messaggio provvisorio appartamento 118 - punto 1"},
+  {lat: 41.22818/100 + 0.00118, lng: 16.30618/100 + 0.00118, msg: "Messaggio provvisorio appartamento 118 - punto 2"},
+  {lat: 41.22818/100 + 0.00118, lng: 16.30618/100 + 0.00118, msg: "Messaggio provvisorio appartamento 118 - punto 3"},
+];
+
+apartments["119"] = [
+  {lat: 41.22819/100 + 0.00119, lng: 16.30619/100 + 0.00119, msg: "Messaggio provvisorio appartamento 119 - punto 1"},
+  {lat: 41.22819/100 + 0.00119, lng: 16.30619/100 + 0.00119, msg: "Messaggio provvisorio appartamento 119 - punto 2"},
+  {lat: 41.22819/100 + 0.00119, lng: 16.30619/100 + 0.00119, msg: "Messaggio provvisorio appartamento 119 - punto 3"},
+];
+
+apartments["120"] = [
+  {lat: 41.22820/100 + 0.00120, lng: 16.30620/100 + 0.00120, msg: "Messaggio provvisorio appartamento 120 - punto 1"},
+  {lat: 41.22820/100 + 0.00120, lng: 16.30620/100 + 0.00120, msg: "Messaggio provvisorio appartamento 120 - punto 2"},
+  {lat: 41.22820/100 + 0.00120, lng: 16.30620/100 + 0.00120, msg: "Messaggio provvisorio appartamento 120 - punto 3"},
+];
+
+apartments["121"] = [
+  {lat: 41.22821/100 + 0.00121, lng: 16.30621/100 + 0.00121, msg: "Messaggio provvisorio appartamento 121 - punto 1"},
+  {lat: 41.22821/100 + 0.00121, lng: 16.30621/100 + 0.00121, msg: "Messaggio provvisorio appartamento 121 - punto 2"},
+  {lat: 41.22821/100 + 0.00121, lng: 16.30621/100 + 0.00121, msg: "Messaggio provvisorio appartamento 121 - punto 3"},
+];
+
+apartments["122"] = [
+  {lat: 41.22822/100 + 0.00122, lng: 16.30622/100 + 0.00122, msg: "Messaggio provvisorio appartamento 122 - punto 1"},
+  {lat: 41.22822/100 + 0.00122, lng: 16.30622/100 + 0.00122, msg: "Messaggio provvisorio appartamento 122 - punto 2"},
+  {lat: 41.22822/100 + 0.00122, lng: 16.30622/100 + 0.00122, msg: "Messaggio provvisorio appartamento 122 - punto 3"},
+];
+
+apartments["123"] = [
+  {lat: 41.22823/100 + 0.00123, lng: 16.30623/100 + 0.00123, msg: "Messaggio provvisorio appartamento 123 - punto 1"},
+  {lat: 41.22823/100 + 0.00123, lng: 16.30623/100 + 0.00123, msg: "Messaggio provvisorio appartamento 123 - punto 2"},
+  {lat: 41.22823/100 + 0.00123, lng: 16.30623/100 + 0.00123, msg: "Messaggio provvisorio appartamento 123 - punto 3"},
+];
+
+apartments["124"] = [
+  {lat: 41.22824/100 + 0.00124, lng: 16.30624/100 + 0.00124, msg: "Messaggio provvisorio appartamento 124 - punto 1"},
+  {lat: 41.22824/100 + 0.00124, lng: 16.30624/100 + 0.00124, msg: "Messaggio provvisorio appartamento 124 - punto 2"},
+  {lat: 41.22824/100 + 0.00124, lng: 16.30624/100 + 0.00124, msg: "Messaggio provvisorio appartamento 124 - punto 3"},
+];
+
+apartments["125"] = [
+  {lat: 41.22825/100 + 0.00125, lng: 16.30625/100 + 0.00125, msg: "Messaggio provvisorio appartamento 125 - punto 1"},
+  {lat: 41.22825/100 + 0.00125, lng: 16.30625/100 + 0.00125, msg: "Messaggio provvisorio appartamento 125 - punto 2"},
+  {lat: 41.22825/100 + 0.00125, lng: 16.30625/100 + 0.00125, msg: "Messaggio provvisorio appartamento 125 - punto 3"},
+];
+
+apartments["126"] = [
+  {lat: 41.22826/100 + 0.00126, lng: 16.30626/100 + 0.00126, msg: "Messaggio provvisorio appartamento 126 - punto 1"},
+  {lat: 41.22826/100 + 0.00126, lng: 16.30626/100 + 0.00126, msg: "Messaggio provvisorio appartamento 126 - punto 2"},
+  {lat: 41.22826/100 + 0.00126, lng: 16.30626/100 + 0.00126, msg: "Messaggio provvisorio appartamento 126 - punto 3"},
+];
+
+apartments["127"] = [
+  {lat: 41.22827/100 + 0.00127, lng: 16.30627/100 + 0.00127, msg: "Messaggio provvisorio appartamento 127 - punto 1"},
+  {lat: 41.22827/100 + 0.00127, lng: 16.30627/100 + 0.00127, msg: "Messaggio provvisorio appartamento 127 - punto 2"},
+  {lat: 41.22827/100 + 0.00127, lng: 16.30627/100 + 0.00127, msg: "Messaggio provvisorio appartamento 127 - punto 3"},
+];
+
+apartments["128"] = [
+  {lat: 41.22828/100 + 0.00128, lng: 16.30628/100 + 0.00128, msg: "Messaggio provvisorio appartamento 128 - punto 1"},
+  {lat: 41.22828/100 + 0.00128, lng: 16.30628/100 + 0.00128, msg: "Messaggio provvisorio appartamento 128 - punto 2"},
+  {lat: 41.22828/100 + 0.00128, lng: 16.30628/100 + 0.00128, msg: "Messaggio provvisorio appartamento 128 - punto 3"},
+];
+
+apartments["129"] = [
+  {lat: 41.22829/100 + 0.00129, lng: 16.30629/100 + 0.00129, msg: "Messaggio provvisorio appartamento 129 - punto 1"},
+  {lat: 41.22829/100 + 0.00129, lng: 16.30629/100 + 0.00129, msg: "Messaggio provvisorio appartamento 129 - punto 2"},
+  {lat: 41.22829/100 + 0.00129, lng: 16.30629/100 + 0.00129, msg: "Messaggio provvisorio appartamento 129 - punto 3"},
+];
+
+apartments["130"] = [
+  {lat: 41.22830/100 + 0.00130, lng: 16.30630/100 + 0.00130, msg: "Messaggio provvisorio appartamento 130 - punto 1"},
+  {lat: 41.22830/100 + 0.00130, lng: 16.30630/100 + 0.00130, msg: "Messaggio provvisorio appartamento 130 - punto 2"},
+  {lat: 41.22830/100 + 0.00130, lng: 16.30630/100 + 0.00130, msg: "Messaggio provvisorio appartamento 130 - punto 3"},
+];
+
+apartments["131"] = [
+  {lat: 41.22831/100 + 0.00131, lng: 16.30631/100 + 0.00131, msg: "Messaggio provvisorio appartamento 131 - punto 1"},
+  {lat: 41.22831/100 + 0.00131, lng: 16.30631/100 + 0.00131, msg: "Messaggio provvisorio appartamento 131 - punto 2"},
+  {lat: 41.22831/100 + 0.00131, lng: 16.30631/100 + 0.00131, msg: "Messaggio provvisorio appartamento 131 - punto 3"},
+];
+
+apartments["132"] = [
+  {lat: 41.22832/100 + 0.00132, lng: 16.30632/100 + 0.00132, msg: "Messaggio provvisorio appartamento 132 - punto 1"},
+  {lat: 41.22832/100 + 0.00132, lng: 16.30632/100 + 0.00132, msg: "Messaggio provvisorio appartamento 132 - punto 2"},
+  {lat: 41.22832/100 + 0.00132, lng: 16.30632/100 + 0.00132, msg: "Messaggio provvisorio appartamento 132 - punto 3"},
+];
+
+apartments["133"] = [
+  {lat: 41.22833/100 + 0.00133, lng: 16.30633/100 + 0.00133, msg: "Messaggio provvisorio appartamento 133 - punto 1"},
+  {lat: 41.22833/100 + 0.00133, lng: 16.30633/100 + 0.00133, msg: "Messaggio provvisorio appartamento 133 - punto 2"},
+  {lat: 41.22833/100 + 0.00133, lng: 16.30633/100 + 0.00133, msg: "Messaggio provvisorio appartamento 133 - punto 3"},
+];
+
+apartments["134"] = [
+  {lat: 41.22834/100 + 0.00134, lng: 16.30634/100 + 0.00134, msg: "Messaggio provvisorio appartamento 134 - punto 1"},
+  {lat: 41.22834/100 + 0.00134, lng: 16.30634/100 + 0.00134, msg: "Messaggio provvisorio appartamento 134 - punto 2"},
+  {lat: 41.22834/100 + 0.00134, lng: 16.30634/100 + 0.00134, msg: "Messaggio provvisorio appartamento 134 - punto 3"},
+];
+
+apartments["135"] = [
+  {lat: 41.22835/100 + 0.00135, lng: 16.30635/100 + 0.00135, msg: "Messaggio provvisorio appartamento 135 - punto 1"},
+  {lat: 41.22835/100 + 0.00135, lng: 16.30635/100 + 0.00135, msg: "Messaggio provvisorio appartamento 135 - punto 2"},
+  {lat: 41.22835/100 + 0.00135, lng: 16.30635/100 + 0.00135, msg: "Messaggio provvisorio appartamento 135 - punto 3"},
+];
+
+apartments["136"] = [
+  {lat: 41.22836/100 + 0.00136, lng: 16.30636/100 + 0.00136, msg: "Messaggio provvisorio appartamento 136 - punto 1"},
+  {lat: 41.22836/100 + 0.00136, lng: 16.30636/100 + 0.00136, msg: "Messaggio provvisorio appartamento 136 - punto 2"},
+  {lat: 41.22836/100 + 0.00136, lng: 16.30636/100 + 0.00136, msg: "Messaggio provvisorio appartamento 136 - punto 3"},
+];
+
+apartments["137"] = [
+  {lat: 41.22837/100 + 0.00137, lng: 16.30637/100 + 0.00137, msg: "Messaggio provvisorio appartamento 137 - punto 1"},
+  {lat: 41.22837/100 + 0.00137, lng: 16.30637/100 + 0.00137, msg: "Messaggio provvisorio appartamento 137 - punto 2"},
+  {lat: 41.22837/100 + 0.00137, lng: 16.30637/100 + 0.00137, msg: "Messaggio provvisorio appartamento 137 - punto 3"},
+];
+
+apartments["138"] = [
+  {lat: 41.22838/100 + 0.00138, lng: 16.30638/100 + 0.00138, msg: "Messaggio provvisorio appartamento 138 - punto 1"},
+  {lat: 41.22838/100 + 0.00138, lng: 16.30638/100 + 0.00138, msg: "Messaggio provvisorio appartamento 138 - punto 2"},
+  {lat: 41.22838/100 + 0.00138, lng: 16.30638/100 + 0.00138, msg: "Messaggio provvisorio appartamento 138 - punto 3"},
+];
+
+apartments["139"] = [
+  {lat: 41.22839/100 + 0.00139, lng: 16.30639/100 + 0.00139, msg: "Messaggio provvisorio appartamento 139 - punto 1"},
+  {lat: 41.22839/100 + 0.00139, lng: 16.30639/100 + 0.00139, msg: "Messaggio provvisorio appartamento 139 - punto 2"},
+  {lat: 41.22839/100 + 0.00139, lng: 16.30639/100 + 0.00139, msg: "Messaggio provvisorio appartamento 139 - punto 3"},
+];
+
+apartments["140"] = [
+  {lat: 41.22840/100 + 0.00140, lng: 16.30640/100 + 0.00140, msg: "Messaggio provvisorio appartamento 140 - punto 1"},
+  {lat: 41.22840/100 + 0.00140, lng: 16.30640/100 + 0.00140, msg: "Messaggio provvisorio appartamento 140 - punto 2"},
+  {lat: 41.22840/100 + 0.00140, lng: 16.30640/100 + 0.00140, msg: "Messaggio provvisorio appartamento 140 - punto 3"},
+];
+
+apartments["141"] = [
+  {lat: 41.22841/100 + 0.00141, lng: 16.30641/100 + 0.00141, msg: "Messaggio provvisorio appartamento 141 - punto 1"},
+  {lat: 41.22841/100 + 0.00141, lng: 16.30641/100 + 0.00141, msg: "Messaggio provvisorio appartamento 141 - punto 2"},
+  {lat: 41.22841/100 + 0.00141, lng: 16.30641/100 + 0.00141, msg: "Messaggio provvisorio appartamento 141 - punto 3"},
+];
+
+apartments["142"] = [
+  {lat: 41.22842/100 + 0.00142, lng: 16.30642/100 + 0.00142, msg: "Messaggio provvisorio appartamento 142 - punto 1"},
+  {lat: 41.22842/100 + 0.00142, lng: 16.30642/100 + 0.00142, msg: "Messaggio provvisorio appartamento 142 - punto 2"},
+  {lat: 41.22842/100 + 0.00142, lng: 16.30642/100 + 0.00142, msg: "Messaggio provvisorio appartamento 142 - punto 3"},
+];
+
+apartments["143"] = [
+  {lat: 41.22843/100 + 0.00143, lng: 16.30643/100 + 0.00143, msg: "Messaggio provvisorio appartamento 143 - punto 1"},
+  {lat: 41.22843/100 + 0.00143, lng: 16.30643/100 + 0.00143, msg: "Messaggio provvisorio appartamento 143 - punto 2"},
+  {lat: 41.22843/100 + 0.00143, lng: 16.30643/100 + 0.00143, msg: "Messaggio provvisorio appartamento 143 - punto 3"},
+];
+
+apartments["144"] = [
+  {lat: 41.22844/100 + 0.00144, lng: 16.30644/100 + 0.00144, msg: "Messaggio provvisorio appartamento 144 - punto 1"},
+  {lat: 41.22844/100 + 0.00144, lng: 16.30644/100 + 0.00144, msg: "Messaggio provvisorio appartamento 144 - punto 2"},
+  {lat: 41.22844/100 + 0.00144, lng: 16.30644/100 + 0.00144, msg: "Messaggio provvisorio appartamento 144 - punto 3"},
+];
+
+apartments["145"] = [
+  {lat: 41.22845/100 + 0.00145, lng: 16.30645/100 + 0.00145, msg: "Messaggio provvisorio appartamento 145 - punto 1"},
+  {lat: 41.22845/100 + 0.00145, lng: 16.30645/100 + 0.00145, msg: "Messaggio provvisorio appartamento 145 - punto 2"},
+  {lat: 41.22845/100 + 0.00145, lng: 16.30645/100 + 0.00145, msg: "Messaggio provvisorio appartamento 145 - punto 3"},
+];
+
+apartments["146"] = [
+  {lat: 41.22846/100 + 0.00146, lng: 16.30646/100 + 0.00146, msg: "Messaggio provvisorio appartamento 146 - punto 1"},
+  {lat: 41.22846/100 + 0.00146, lng: 16.30646/100 + 0.00146, msg: "Messaggio provvisorio appartamento 146 - punto 2"},
+  {lat: 41.22846/100 + 0.00146, lng: 16.30646/100 + 0.00146, msg: "Messaggio provvisorio appartamento 146 - punto 3"},
+];
+
+apartments["147"] = [
+  {lat: 41.22847/100 + 0.00147, lng: 16.30647/100 + 0.00147, msg: "Messaggio provvisorio appartamento 147 - punto 1"},
+  {lat: 41.22847/100 + 0.00147, lng: 16.30647/100 + 0.00147, msg: "Messaggio provvisorio appartamento 147 - punto 2"},
+  {lat: 41.22847/100 + 0.00147, lng: 16.30647/100 + 0.00147, msg: "Messaggio provvisorio appartamento 147 - punto 3"},
+];
+
+apartments["148"] = [
+  {lat: 41.22848/100 + 0.00148, lng: 16.30648/100 + 0.00148, msg: "Messaggio provvisorio appartamento 148 - punto 1"},
+  {lat: 41.22848/100 + 0.00148, lng: 16.30648/100 + 0.00148, msg: "Messaggio provvisorio appartamento 148 - punto 2"},
+  {lat: 41.22848/100 + 0.00148, lng: 16.30648/100 + 0.00148, msg: "Messaggio provvisorio appartamento 148 - punto 3"},
+];
+
+apartments["149"] = [
+  {lat: 41.22849/100 + 0.00149, lng: 16.30649/100 + 0.00149, msg: "Messaggio provvisorio appartamento 149 - punto 1"},
+  {lat: 41.22849/100 + 0.00149, lng: 16.30649/100 + 0.00149, msg: "Messaggio provvisorio appartamento 149 - punto 2"},
+  {lat: 41.22849/100 + 0.00149, lng: 16.30649/100 + 0.00149, msg: "Messaggio provvisorio appartamento 149 - punto 3"},
+];
+
+apartments["150"] = [
+  {lat: 41.22850/100 + 0.00150, lng: 16.30650/100 + 0.00150, msg: "Messaggio provvisorio appartamento 150 - punto 1"},
+  {lat: 41.22850/100 + 0.00150, lng: 16.30650/100 + 0.00150, msg: "Messaggio provvisorio appartamento 150 - punto 2"},
+  {lat: 41.22850/100 + 0.00150, lng: 16.30650/100 + 0.00150, msg: "Messaggio provvisorio appartamento 150 - punto 3"},
+];
+
+apartments["151"] = [
+  {lat: 41.22851/100 + 0.00151, lng: 16.30651/100 + 0.00151, msg: "Messaggio provvisorio appartamento 151 - punto 1"},
+  {lat: 41.22851/100 + 0.00151, lng: 16.30651/100 + 0.00151, msg: "Messaggio provvisorio appartamento 151 - punto 2"},
+  {lat: 41.22851/100 + 0.00151, lng: 16.30651/100 + 0.00151, msg: "Messaggio provvisorio appartamento 151 - punto 3"},
+];
+
+apartments["152"] = [
+  {lat: 41.22852/100 + 0.00152, lng: 16.30652/100 + 0.00152, msg: "Messaggio provvisorio appartamento 152 - punto 1"},
+  {lat: 41.22852/100 + 0.00152, lng: 16.30652/100 + 0.00152, msg: "Messaggio provvisorio appartamento 152 - punto 2"},
+  {lat: 41.22852/100 + 0.00152, lng: 16.30652/100 + 0.00152, msg: "Messaggio provvisorio appartamento 152 - punto 3"},
+];
+
+apartments["153"] = [
+  {lat: 41.22853/100 + 0.00153, lng: 16.30653/100 + 0.00153, msg: "Messaggio provvisorio appartamento 153 - punto 1"},
+  {lat: 41.22853/100 + 0.00153, lng: 16.30653/100 + 0.00153, msg: "Messaggio provvisorio appartamento 153 - punto 2"},
+  {lat: 41.22853/100 + 0.00153, lng: 16.30653/100 + 0.00153, msg: "Messaggio provvisorio appartamento 153 - punto 3"},
+];
+
+apartments["154"] = [
+  {lat: 41.22854/100 + 0.00154, lng: 16.30654/100 + 0.00154, msg: "Messaggio provvisorio appartamento 154 - punto 1"},
+  {lat: 41.22854/100 + 0.00154, lng: 16.30654/100 + 0.00154, msg: "Messaggio provvisorio appartamento 154 - punto 2"},
+  {lat: 41.22854/100 + 0.00154, lng: 16.30654/100 + 0.00154, msg: "Messaggio provvisorio appartamento 154 - punto 3"},
+];
+
+apartments["155"] = [
+  {lat: 41.22855/100 + 0.00155, lng: 16.30655/100 + 0.00155, msg: "Messaggio provvisorio appartamento 155 - punto 1"},
+  {lat: 41.22855/100 + 0.00155, lng: 16.30655/100 + 0.00155, msg: "Messaggio provvisorio appartamento 155 - punto 2"},
+  {lat: 41.22855/100 + 0.00155, lng: 16.30655/100 + 0.00155, msg: "Messaggio provvisorio appartamento 155 - punto 3"},
+];
+
+apartments["156"] = [
+  {lat: 41.22856/100 + 0.00156, lng: 16.30656/100 + 0.00156, msg: "Messaggio provvisorio appartamento 156 - punto 1"},
+  {lat: 41.22856/100 + 0.00156, lng: 16.30656/100 + 0.00156, msg: "Messaggio provvisorio appartamento 156 - punto 2"},
+  {lat: 41.22856/100 + 0.00156, lng: 16.30656/100 + 0.00156, msg: "Messaggio provvisorio appartamento 156 - punto 3"},
+];
+
+apartments["157"] = [
+  {lat: 41.22857/100 + 0.00157, lng: 16.30657/100 + 0.00157, msg: "Messaggio provvisorio appartamento 157 - punto 1"},
+  {lat: 41.22857/100 + 0.00157, lng: 16.30657/100 + 0.00157, msg: "Messaggio provvisorio appartamento 157 - punto 2"},
+  {lat: 41.22857/100 + 0.00157, lng: 16.30657/100 + 0.00157, msg: "Messaggio provvisorio appartamento 157 - punto 3"},
+];
+
+apartments["158"] = [
+  {lat: 41.22858/100 + 0.00158, lng: 16.30658/100 + 0.00158, msg: "Messaggio provvisorio appartamento 158 - punto 1"},
+  {lat: 41.22858/100 + 0.00158, lng: 16.30658/100 + 0.00158, msg: "Messaggio provvisorio appartamento 158 - punto 2"},
+  {lat: 41.22858/100 + 0.00158, lng: 16.30658/100 + 0.00158, msg: "Messaggio provvisorio appartamento 158 - punto 3"},
+];
+
+apartments["159"] = [
+  {lat: 41.22859/100 + 0.00159, lng: 16.30659/100 + 0.00159, msg: "Messaggio provvisorio appartamento 159 - punto 1"},
+  {lat: 41.22859/100 + 0.00159, lng: 16.30659/100 + 0.00159, msg: "Messaggio provvisorio appartamento 159 - punto 2"},
+  {lat: 41.22859/100 + 0.00159, lng: 16.30659/100 + 0.00159, msg: "Messaggio provvisorio appartamento 159 - punto 3"},
+];
+
+apartments["160"] = [
+  {lat: 41.22860/100 + 0.00160, lng: 16.30660/100 + 0.00160, msg: "Messaggio provvisorio appartamento 160 - punto 1"},
+  {lat: 41.22860/100 + 0.00160, lng: 16.30660/100 + 0.00160, msg: "Messaggio provvisorio appartamento 160 - punto 2"},
+  {lat: 41.22860/100 + 0.00160, lng: 16.30660/100 + 0.00160, msg: "Messaggio provvisorio appartamento 160 - punto 3"},
+];
+
+apartments["161"] = [
+  {lat: 41.22861/100 + 0.00161, lng: 16.30661/100 + 0.00161, msg: "Messaggio provvisorio appartamento 161 - punto 1"},
+  {lat: 41.22861/100 + 0.00161, lng: 16.30661/100 + 0.00161, msg: "Messaggio provvisorio appartamento 161 - punto 2"},
+  {lat: 41.22861/100 + 0.00161, lng: 16.30661/100 + 0.00161, msg: "Messaggio provvisorio appartamento 161 - punto 3"},
+];
+
+apartments["162"] = [
+  {lat: 41.22862/100 + 0.00162, lng: 16.30662/100 + 0.00162, msg: "Messaggio provvisorio appartamento 162 - punto 1"},
+  {lat: 41.22862/100 + 0.00162, lng: 16.30662/100 + 0.00162, msg: "Messaggio provvisorio appartamento 162 - punto 2"},
+  {lat: 41.22862/100 + 0.00162, lng: 16.30662/100 + 0.00162, msg: "Messaggio provvisorio appartamento 162 - punto 3"},
+];
+
+apartments["163"] = [
+  {lat: 41.22863/100 + 0.00163, lng: 16.30663/100 + 0.00163, msg: "Messaggio provvisorio appartamento 163 - punto 1"},
+  {lat: 41.22863/100 + 0.00163, lng: 16.30663/100 + 0.00163, msg: "Messaggio provvisorio appartamento 163 - punto 2"},
+  {lat: 41.22863/100 + 0.00163, lng: 16.30663/100 + 0.00163, msg: "Messaggio provvisorio appartamento 163 - punto 3"},
+];
+
+apartments["164"] = [
+  {lat: 41.22864/100 + 0.00164, lng: 16.30664/100 + 0.00164, msg: "Messaggio provvisorio appartamento 164 - punto 1"},
+  {lat: 41.22864/100 + 0.00164, lng: 16.30664/100 + 0.00164, msg: "Messaggio provvisorio appartamento 164 - punto 2"},
+  {lat: 41.22864/100 + 0.00164, lng: 16.30664/100 + 0.00164, msg: "Messaggio provvisorio appartamento 164 - punto 3"},
+];
+
+apartments["165"] = [
+  {lat: 41.22865/100 + 0.00165, lng: 16.30665/100 + 0.00165, msg: "Messaggio provvisorio appartamento 165 - punto 1"},
+  {lat: 41.22865/100 + 0.00165, lng: 16.30665/100 + 0.00165, msg: "Messaggio provvisorio appartamento 165 - punto 2"},
+  {lat: 41.22865/100 + 0.00165, lng: 16.30665/100 + 0.00165, msg: "Messaggio provvisorio appartamento 165 - punto 3"},
+];
+
+apartments["166"] = [
+  {lat: 41.22866/100 + 0.00166, lng: 16.30666/100 + 0.00166, msg: "Messaggio provvisorio appartamento 166 - punto 1"},
+  {lat: 41.22866/100 + 0.00166, lng: 16.30666/100 + 0.00166, msg: "Messaggio provvisorio appartamento 166 - punto 2"},
+  {lat: 41.22866/100 + 0.00166, lng: 16.30666/100 + 0.00166, msg: "Messaggio provvisorio appartamento 166 - punto 3"},
+];
+
+apartments["167"] = [
+  {lat: 41.22867/100 + 0.00167, lng: 16.30667/100 + 0.00167, msg: "Messaggio provvisorio appartamento 167 - punto 1"},
+  {lat: 41.22867/100 + 0.00167, lng: 16.30667/100 + 0.00167, msg: "Messaggio provvisorio appartamento 167 - punto 2"},
+  {lat: 41.22867/100 + 0.00167, lng: 16.30667/100 + 0.00167, msg: "Messaggio provvisorio appartamento 167 - punto 3"},
+];
+
+apartments["168"] = [
+  {lat: 41.22868/100 + 0.00168, lng: 16.30668/100 + 0.00168, msg: "Messaggio provvisorio appartamento 168 - punto 1"},
+  {lat: 41.22868/100 + 0.00168, lng: 16.30668/100 + 0.00168, msg: "Messaggio provvisorio appartamento 168 - punto 2"},
+  {lat: 41.22868/100 + 0.00168, lng: 16.30668/100 + 0.00168, msg: "Messaggio provvisorio appartamento 168 - punto 3"},
+];
+
+apartments["169"] = [
+  {lat: 41.22869/100 + 0.00169, lng: 16.30669/100 + 0.00169, msg: "Messaggio provvisorio appartamento 169 - punto 1"},
+  {lat: 41.22869/100 + 0.00169, lng: 16.30669/100 + 0.00169, msg: "Messaggio provvisorio appartamento 169 - punto 2"},
+  {lat: 41.22869/100 + 0.00169, lng: 16.30669/100 + 0.00169, msg: "Messaggio provvisorio appartamento 169 - punto 3"},
+];
+
+apartments["170"] = [
+  {lat: 41.22870/100 + 0.00170, lng: 16.30670/100 + 0.00170, msg: "Messaggio provvisorio appartamento 170 - punto 1"},
+  {lat: 41.22870/100 + 0.00170, lng: 16.30670/100 + 0.00170, msg: "Messaggio provvisorio appartamento 170 - punto 2"},
+  {lat: 41.22870/100 + 0.00170, lng: 16.30670/100 + 0.00170, msg: "Messaggio provvisorio appartamento 170 - punto 3"},
+];
+
+apartments["171"] = [
+  {lat: 41.22871/100 + 0.00171, lng: 16.30671/100 + 0.00171, msg: "Messaggio provvisorio appartamento 171 - punto 1"},
+  {lat: 41.22871/100 + 0.00171, lng: 16.30671/100 + 0.00171, msg: "Messaggio provvisorio appartamento 171 - punto 2"},
+  {lat: 41.22871/100 + 0.00171, lng: 16.30671/100 + 0.00171, msg: "Messaggio provvisorio appartamento 171 - punto 3"},
+];
+
+apartments["172"] = [
+  {lat: 41.22872/100 + 0.00172, lng: 16.30672/100 + 0.00172, msg: "Messaggio provvisorio appartamento 172 - punto 1"},
+  {lat: 41.22872/100 + 0.00172, lng: 16.30672/100 + 0.00172, msg: "Messaggio provvisorio appartamento 172 - punto 2"},
+  {lat: 41.22872/100 + 0.00172, lng: 16.30672/100 + 0.00172, msg: "Messaggio provvisorio appartamento 172 - punto 3"},
+];
+
+apartments["173"] = [
+  {lat: 41.22873/100 + 0.00173, lng: 16.30673/100 + 0.00173, msg: "Messaggio provvisorio appartamento 173 - punto 1"},
+  {lat: 41.22873/100 + 0.00173, lng: 16.30673/100 + 0.00173, msg: "Messaggio provvisorio appartamento 173 - punto 2"},
+  {lat: 41.22873/100 + 0.00173, lng: 16.30673/100 + 0.00173, msg: "Messaggio provvisorio appartamento 173 - punto 3"},
+];
+
+apartments["174"] = [
+  {lat: 41.22874/100 + 0.00174, lng: 16.30674/100 + 0.00174, msg: "Messaggio provvisorio appartamento 174 - punto 1"},
+  {lat: 41.22874/100 + 0.00174, lng: 16.30674/100 + 0.00174, msg: "Messaggio provvisorio appartamento 174 - punto 2"},
+  {lat: 41.22874/100 + 0.00174, lng: 16.30674/100 + 0.00174, msg: "Messaggio provvisorio appartamento 174 - punto 3"},
+];
+
+apartments["175"] = [
+  {lat: 41.22875/100 + 0.00175, lng: 16.30675/100 + 0.00175, msg: "Messaggio provvisorio appartamento 175 - punto 1"},
+  {lat: 41.22875/100 + 0.00175, lng: 16.30675/100 + 0.00175, msg: "Messaggio provvisorio appartamento 175 - punto 2"},
+  {lat: 41.22875/100 + 0.00175, lng: 16.30675/100 + 0.00175, msg: "Messaggio provvisorio appartamento 175 - punto 3"},
+];
+
+apartments["176"] = [
+  {lat: 41.22876/100 + 0.00176, lng: 16.30676/100 + 0.00176, msg: "Messaggio provvisorio appartamento 176 - punto 1"},
+  {lat: 41.22876/100 + 0.00176, lng: 16.30676/100 + 0.00176, msg: "Messaggio provvisorio appartamento 176 - punto 2"},
+  {lat: 41.22876/100 + 0.00176, lng: 16.30676/100 + 0.00176, msg: "Messaggio provvisorio appartamento 176 - punto 3"},
+];
+
+apartments["177"] = [
+  {lat: 41.22877/100 + 0.00177, lng: 16.30677/100 + 0.00177, msg: "Messaggio provvisorio appartamento 177 - punto 1"},
+  {lat: 41.22877/100 + 0.00177, lng: 16.30677/100 + 0.00177, msg: "Messaggio provvisorio appartamento 177 - punto 2"},
+  {lat: 41.22877/100 + 0.00177, lng: 16.30677/100 + 0.00177, msg: "Messaggio provvisorio appartamento 177 - punto 3"},
+];
+
+apartments["178"] = [
+  {lat: 41.22878/100 + 0.00178, lng: 16.30678/100 + 0.00178, msg: "Messaggio provvisorio appartamento 178 - punto 1"},
+  {lat: 41.22878/100 + 0.00178, lng: 16.30678/100 + 0.00178, msg: "Messaggio provvisorio appartamento 178 - punto 2"},
+  {lat: 41.22878/100 + 0.00178, lng: 16.30678/100 + 0.00178, msg: "Messaggio provvisorio appartamento 178 - punto 3"},
+];
+
+apartments["179"] = [
+  {lat: 41.22879/100 + 0.00179, lng: 16.30679/100 + 0.00179, msg: "Messaggio provvisorio appartamento 179 - punto 1"},
+  {lat: 41.22879/100 + 0.00179, lng: 16.30679/100 + 0.00179, msg: "Messaggio provvisorio appartamento 179 - punto 2"},
+  {lat: 41.22879/100 + 0.00179, lng: 16.30679/100 + 0.00179, msg: "Messaggio provvisorio appartamento 179 - punto 3"},
+];
+
+apartments["180"] = [
+  {lat: 41.22880/100 + 0.00180, lng: 16.30680/100 + 0.00180, msg: "Messaggio provvisorio appartamento 180 - punto 1"},
+  {lat: 41.22880/100 + 0.00180, lng: 16.30680/100 + 0.00180, msg: "Messaggio provvisorio appartamento 180 - punto 2"},
+  {lat: 41.22880/100 + 0.00180, lng: 16.30680/100 + 0.00180, msg: "Messaggio provvisorio appartamento 180 - punto 3"},
+];
+
+apartments["181"] = [
+  {lat: 41.22881/100 + 0.00181, lng: 16.30681/100 + 0.00181, msg: "Messaggio provvisorio appartamento 181 - punto 1"},
+  {lat: 41.22881/100 + 0.00181, lng: 16.30681/100 + 0.00181, msg: "Messaggio provvisorio appartamento 181 - punto 2"},
+  {lat: 41.22881/100 + 0.00181, lng: 16.30681/100 + 0.00181, msg: "Messaggio provvisorio appartamento 181 - punto 3"},
+];
+
+apartments["182"] = [
+  {lat: 41.22882/100 + 0.00182, lng: 16.30682/100 + 0.00182, msg: "Messaggio provvisorio appartamento 182 - punto 1"},
+  {lat: 41.22882/100 + 0.00182, lng: 16.30682/100 + 0.00182, msg: "Messaggio provvisorio appartamento 182 - punto 2"},
+  {lat: 41.22882/100 + 0.00182, lng: 16.30682/100 + 0.00182, msg: "Messaggio provvisorio appartamento 182 - punto 3"},
+];
+
+apartments["183"] = [
+  {lat: 41.22883/100 + 0.00183, lng: 16.30683/100 + 0.00183, msg: "Messaggio provvisorio appartamento 183 - punto 1"},
+  {lat: 41.22883/100 + 0.00183, lng: 16.30683/100 + 0.00183, msg: "Messaggio provvisorio appartamento 183 - punto 2"},
+  {lat: 41.22883/100 + 0.00183, lng: 16.30683/100 + 0.00183, msg: "Messaggio provvisorio appartamento 183 - punto 3"},
+];
+
+apartments["184"] = [
+  {lat: 41.22884/100 + 0.00184, lng: 16.30684/100 + 0.00184, msg: "Messaggio provvisorio appartamento 184 - punto 1"},
+  {lat: 41.22884/100 + 0.00184, lng: 16.30684/100 + 0.00184, msg: "Messaggio provvisorio appartamento 184 - punto 2"},
+  {lat: 41.22884/100 + 0.00184, lng: 16.30684/100 + 0.00184, msg: "Messaggio provvisorio appartamento 184 - punto 3"},
+];
+
+apartments["185"] = [
+  {lat: 41.22885/100 + 0.00185, lng: 16.30685/100 + 0.00185, msg: "Messaggio provvisorio appartamento 185 - punto 1"},
+  {lat: 41.22885/100 + 0.00185, lng: 16.30685/100 + 0.00185, msg: "Messaggio provvisorio appartamento 185 - punto 2"},
+  {lat: 41.22885/100 + 0.00185, lng: 16.30685/100 + 0.00185, msg: "Messaggio provvisorio appartamento 185 - punto 3"},
+];
+
+apartments["186"] = [
+  {lat: 41.22886/100 + 0.00186, lng: 16.30686/100 + 0.00186, msg: "Messaggio provvisorio appartamento 186 - punto 1"},
+  {lat: 41.22886/100 + 0.00186, lng: 16.30686/100 + 0.00186, msg: "Messaggio provvisorio appartamento 186 - punto 2"},
+  {lat: 41.22886/100 + 0.00186, lng: 16.30686/100 + 0.00186, msg: "Messaggio provvisorio appartamento 186 - punto 3"},
+];
+
+apartments["187"] = [
+  {lat: 41.22887/100 + 0.00187, lng: 16.30687/100 + 0.00187, msg: "Messaggio provvisorio appartamento 187 - punto 1"},
+  {lat: 41.22887/100 + 0.00187, lng: 16.30687/100 + 0.00187, msg: "Messaggio provvisorio appartamento 187 - punto 2"},
+  {lat: 41.22887/100 + 0.00187, lng: 16.30687/100 + 0.00187, msg: "Messaggio provvisorio appartamento 187 - punto 3"},
+];
+
+apartments["188"] = [
+  {lat: 41.22888/100 + 0.00188, lng: 16.30688/100 + 0.00188, msg: "Messaggio provvisorio appartamento 188 - punto 1"},
+  {lat: 41.22888/100 + 0.00188, lng: 16.30688/100 + 0.00188, msg: "Messaggio provvisorio appartamento 188 - punto 2"},
+  {lat: 41.22888/100 + 0.00188, lng: 16.30688/100 + 0.00188, msg: "Messaggio provvisorio appartamento 188 - punto 3"},
+];
+
+apartments["189"] = [
+  {lat: 41.22889/100 + 0.00189, lng: 16.30689/100 + 0.00189, msg: "Messaggio provvisorio appartamento 189 - punto 1"},
+  {lat: 41.22889/100 + 0.00189, lng: 16.30689/100 + 0.00189, msg: "Messaggio provvisorio appartamento 189 - punto 2"},
+  {lat: 41.22889/100 + 0.00189, lng: 16.30689/100 + 0.00189, msg: "Messaggio provvisorio appartamento 189 - punto 3"},
+];
+
+apartments["190"] = [
+  {lat: 41.22890/100 + 0.00190, lng: 16.30690/100 + 0.00190, msg: "Messaggio provvisorio appartamento 190 - punto 1"},
+  {lat: 41.22890/100 + 0.00190, lng: 16.30690/100 + 0.00190, msg: "Messaggio provvisorio appartamento 190 - punto 2"},
+  {lat: 41.22890/100 + 0.00190, lng: 16.30690/100 + 0.00190, msg: "Messaggio provvisorio appartamento 190 - punto 3"},
+];
+
+apartments["191"] = [
+  {lat: 41.22891/100 + 0.00191, lng: 16.30691/100 + 0.00191, msg: "Messaggio provvisorio appartamento 191 - punto 1"},
+  {lat: 41.22891/100 + 0.00191, lng: 16.30691/100 + 0.00191, msg: "Messaggio provvisorio appartamento 191 - punto 2"},
+  {lat: 41.22891/100 + 0.00191, lng: 16.30691/100 + 0.00191, msg: "Messaggio provvisorio appartamento 191 - punto 3"},
+];
+
+apartments["192"] = [
+  {lat: 41.22892/100 + 0.00192, lng: 16.30692/100 + 0.00192, msg: "Messaggio provvisorio appartamento 192 - punto 1"},
+  {lat: 41.22892/100 + 0.00192, lng: 16.30692/100 + 0.00192, msg: "Messaggio provvisorio appartamento 192 - punto 2"},
+  {lat: 41.22892/100 + 0.00192, lng: 16.30692/100 + 0.00192, msg: "Messaggio provvisorio appartamento 192 - punto 3"},
+];
+
+apartments["193"] = [
+  {lat: 41.22893/100 + 0.00193, lng: 16.30693/100 + 0.00193, msg: "Messaggio provvisorio appartamento 193 - punto 1"},
+  {lat: 41.22893/100 + 0.00193, lng: 16.30693/100 + 0.00193, msg: "Messaggio provvisorio appartamento 193 - punto 2"},
+  {lat: 41.22893/100 + 0.00193, lng: 16.30693/100 + 0.00193, msg: "Messaggio provvisorio appartamento 193 - punto 3"},
+];
+
+apartments["194"] = [
+  {lat: 41.22894/100 + 0.00194, lng: 16.30694/100 + 0.00194, msg: "Messaggio provvisorio appartamento 194 - punto 1"},
+  {lat: 41.22894/100 + 0.00194, lng: 16.30694/100 + 0.00194, msg: "Messaggio provvisorio appartamento 194 - punto 2"},
+  {lat: 41.22894/100 + 0.00194, lng: 16.30694/100 + 0.00194, msg: "Messaggio provvisorio appartamento 194 - punto 3"},
+];
+
+apartments["195"] = [
+  {lat: 41.22895/100 + 0.00195, lng: 16.30695/100 + 0.00195, msg: "Messaggio provvisorio appartamento 195 - punto 1"},
+  {lat: 41.22895/100 + 0.00195, lng: 16.30695/100 + 0.00195, msg: "Messaggio provvisorio appartamento 195 - punto 2"},
+  {lat: 41.22895/100 + 0.00195, lng: 16.30695/100 + 0.00195, msg: "Messaggio provvisorio appartamento 195 - punto 3"},
+];
+
+apartments["196"] = [
+  {lat: 41.22896/100 + 0.00196, lng: 16.30696/100 + 0.00196, msg: "Messaggio provvisorio appartamento 196 - punto 1"},
+  {lat: 41.22896/100 + 0.00196, lng: 16.30696/100 + 0.00196, msg: "Messaggio provvisorio appartamento 196 - punto 2"},
+  {lat: 41.22896/100 + 0.00196, lng: 16.30696/100 + 0.00196, msg: "Messaggio provvisorio appartamento 196 - punto 3"},
+];
+
+apartments["197"] = [
+  {lat: 41.22897/100 + 0.00197, lng: 16.30697/100 + 0.00197, msg: "Messaggio provvisorio appartamento 197 - punto 1"},
+  {lat: 41.22897/100 + 0.00197, lng: 16.30697/100 + 0.00197, msg: "Messaggio provvisorio appartamento 197 - punto 2"},
+  {lat: 41.22897/100 + 0.00197, lng: 16.30697/100 + 0.00197, msg: "Messaggio provvisorio appartamento 197 - punto 3"},
+];
+
+apartments["198"] = [
+  {lat: 41.22898/100 + 0.00198, lng: 16.30698/100 + 0.00198, msg: "Messaggio provvisorio appartamento 198 - punto 1"},
+  {lat: 41.22898/100 + 0.00198, lng: 16.30698/100 + 0.00198, msg: "Messaggio provvisorio appartamento 198 - punto 2"},
+  {lat: 41.22898/100 + 0.00198, lng: 16.30698/100 + 0.00198, msg: "Messaggio provvisorio appartamento 198 - punto 3"},
+];
+
+apartments["199"] = [
+  {lat: 41.22899/100 + 0.00199, lng: 16.30699/100 + 0.00199, msg: "Messaggio provvisorio appartamento 199 - punto 1"},
+  {lat: 41.22899/100 + 0.00199, lng: 16.30699/100 + 0.00199, msg: "Messaggio provvisorio appartamento 199 - punto 2"},
+  {lat: 41.22899/100 + 0.00199, lng: 16.30699/100 + 0.00199, msg: "Messaggio provvisorio appartamento 199 - punto 3"},
+];
+
+apartments["200"] = [
+  {lat: 41.2280/100 + 0.00200, lng: 16.3060/100 + 0.00200, msg: "Messaggio provvisorio appartamento 200 - punto 1"},
+  {lat: 41.2280/100 + 0.00200, lng: 16.3060/100 + 0.00200, msg: "Messaggio provvisorio appartamento 200 - punto 2"},
+  {lat: 41.2280/100 + 0.00200, lng: 16.3060/100 + 0.00200, msg: "Messaggio provvisorio appartamento 200 - punto 3"},
+];
+
+apartments["201"] = [
+  {lat: 41.2281/100 + 0.00201, lng: 16.3061/100 + 0.00201, msg: "Messaggio provvisorio appartamento 201 - punto 1"},
+  {lat: 41.2281/100 + 0.00201, lng: 16.3061/100 + 0.00201, msg: "Messaggio provvisorio appartamento 201 - punto 2"},
+  {lat: 41.2281/100 + 0.00201, lng: 16.3061/100 + 0.00201, msg: "Messaggio provvisorio appartamento 201 - punto 3"},
+];
+
+apartments["202"] = [
+  {lat: 41.2282/100 + 0.00202, lng: 16.3062/100 + 0.00202, msg: "Messaggio provvisorio appartamento 202 - punto 1"},
+  {lat: 41.2282/100 + 0.00202, lng: 16.3062/100 + 0.00202, msg: "Messaggio provvisorio appartamento 202 - punto 2"},
+  {lat: 41.2282/100 + 0.00202, lng: 16.3062/100 + 0.00202, msg: "Messaggio provvisorio appartamento 202 - punto 3"},
+];
+
+apartments["203"] = [
+  {lat: 41.2283/100 + 0.00203, lng: 16.3063/100 + 0.00203, msg: "Messaggio provvisorio appartamento 203 - punto 1"},
+  {lat: 41.2283/100 + 0.00203, lng: 16.3063/100 + 0.00203, msg: "Messaggio provvisorio appartamento 203 - punto 2"},
+  {lat: 41.2283/100 + 0.00203, lng: 16.3063/100 + 0.00203, msg: "Messaggio provvisorio appartamento 203 - punto 3"},
+];
+
+apartments["204"] = [
+  {lat: 41.2284/100 + 0.00204, lng: 16.3064/100 + 0.00204, msg: "Messaggio provvisorio appartamento 204 - punto 1"},
+  {lat: 41.2284/100 + 0.00204, lng: 16.3064/100 + 0.00204, msg: "Messaggio provvisorio appartamento 204 - punto 2"},
+  {lat: 41.2284/100 + 0.00204, lng: 16.3064/100 + 0.00204, msg: "Messaggio provvisorio appartamento 204 - punto 3"},
+];
+
+apartments["205"] = [
+  {lat: 41.2285/100 + 0.00205, lng: 16.3065/100 + 0.00205, msg: "Messaggio provvisorio appartamento 205 - punto 1"},
+  {lat: 41.2285/100 + 0.00205, lng: 16.3065/100 + 0.00205, msg: "Messaggio provvisorio appartamento 205 - punto 2"},
+  {lat: 41.2285/100 + 0.00205, lng: 16.3065/100 + 0.00205, msg: "Messaggio provvisorio appartamento 205 - punto 3"},
+];
+
+apartments["206"] = [
+  {lat: 41.2286/100 + 0.00206, lng: 16.3066/100 + 0.00206, msg: "Messaggio provvisorio appartamento 206 - punto 1"},
+  {lat: 41.2286/100 + 0.00206, lng: 16.3066/100 + 0.00206, msg: "Messaggio provvisorio appartamento 206 - punto 2"},
+  {lat: 41.2286/100 + 0.00206, lng: 16.3066/100 + 0.00206, msg: "Messaggio provvisorio appartamento 206 - punto 3"},
+];
+
+apartments["207"] = [
+  {lat: 41.2287/100 + 0.00207, lng: 16.3067/100 + 0.00207, msg: "Messaggio provvisorio appartamento 207 - punto 1"},
+  {lat: 41.2287/100 + 0.00207, lng: 16.3067/100 + 0.00207, msg: "Messaggio provvisorio appartamento 207 - punto 2"},
+  {lat: 41.2287/100 + 0.00207, lng: 16.3067/100 + 0.00207, msg: "Messaggio provvisorio appartamento 207 - punto 3"},
+];
+
+apartments["208"] = [
+  {lat: 41.2288/100 + 0.00208, lng: 16.3068/100 + 0.00208, msg: "Messaggio provvisorio appartamento 208 - punto 1"},
+  {lat: 41.2288/100 + 0.00208, lng: 16.3068/100 + 0.00208, msg: "Messaggio provvisorio appartamento 208 - punto 2"},
+  {lat: 41.2288/100 + 0.00208, lng: 16.3068/100 + 0.00208, msg: "Messaggio provvisorio appartamento 208 - punto 3"},
+];
+
+apartments["209"] = [
+  {lat: 41.2289/100 + 0.00209, lng: 16.3069/100 + 0.00209, msg: "Messaggio provvisorio appartamento 209 - punto 1"},
+  {lat: 41.2289/100 + 0.00209, lng: 16.3069/100 + 0.00209, msg: "Messaggio provvisorio appartamento 209 - punto 2"},
+  {lat: 41.2289/100 + 0.00209, lng: 16.3069/100 + 0.00209, msg: "Messaggio provvisorio appartamento 209 - punto 3"},
+];
+
+apartments["210"] = [
+  {lat: 41.22810/100 + 0.00210, lng: 16.30610/100 + 0.00210, msg: "Messaggio provvisorio appartamento 210 - punto 1"},
+  {lat: 41.22810/100 + 0.00210, lng: 16.30610/100 + 0.00210, msg: "Messaggio provvisorio appartamento 210 - punto 2"},
+  {lat: 41.22810/100 + 0.00210, lng: 16.30610/100 + 0.00210, msg: "Messaggio provvisorio appartamento 210 - punto 3"},
+];
+
+apartments["211"] = [
+  {lat: 41.22811/100 + 0.00211, lng: 16.30611/100 + 0.00211, msg: "Messaggio provvisorio appartamento 211 - punto 1"},
+  {lat: 41.22811/100 + 0.00211, lng: 16.30611/100 + 0.00211, msg: "Messaggio provvisorio appartamento 211 - punto 2"},
+  {lat: 41.22811/100 + 0.00211, lng: 16.30611/100 + 0.00211, msg: "Messaggio provvisorio appartamento 211 - punto 3"},
+];
+
+apartments["212"] = [
+  {lat: 41.22812/100 + 0.00212, lng: 16.30612/100 + 0.00212, msg: "Messaggio provvisorio appartamento 212 - punto 1"},
+  {lat: 41.22812/100 + 0.00212, lng: 16.30612/100 + 0.00212, msg: "Messaggio provvisorio appartamento 212 - punto 2"},
+  {lat: 41.22812/100 + 0.00212, lng: 16.30612/100 + 0.00212, msg: "Messaggio provvisorio appartamento 212 - punto 3"},
+];
+
+apartments["213"] = [
+  {lat: 41.22813/100 + 0.00213, lng: 16.30613/100 + 0.00213, msg: "Messaggio provvisorio appartamento 213 - punto 1"},
+  {lat: 41.22813/100 + 0.00213, lng: 16.30613/100 + 0.00213, msg: "Messaggio provvisorio appartamento 213 - punto 2"},
+  {lat: 41.22813/100 + 0.00213, lng: 16.30613/100 + 0.00213, msg: "Messaggio provvisorio appartamento 213 - punto 3"},
+];
+
+apartments["214"] = [
+  {lat: 41.22814/100 + 0.00214, lng: 16.30614/100 + 0.00214, msg: "Messaggio provvisorio appartamento 214 - punto 1"},
+  {lat: 41.22814/100 + 0.00214, lng: 16.30614/100 + 0.00214, msg: "Messaggio provvisorio appartamento 214 - punto 2"},
+  {lat: 41.22814/100 + 0.00214, lng: 16.30614/100 + 0.00214, msg: "Messaggio provvisorio appartamento 214 - punto 3"},
+];
+
+apartments["215"] = [
+  {lat: 41.22815/100 + 0.00215, lng: 16.30615/100 + 0.00215, msg: "Messaggio provvisorio appartamento 215 - punto 1"},
+  {lat: 41.22815/100 + 0.00215, lng: 16.30615/100 + 0.00215, msg: "Messaggio provvisorio appartamento 215 - punto 2"},
+  {lat: 41.22815/100 + 0.00215, lng: 16.30615/100 + 0.00215, msg: "Messaggio provvisorio appartamento 215 - punto 3"},
+];
+
+apartments["216"] = [
+  {lat: 41.22816/100 + 0.00216, lng: 16.30616/100 + 0.00216, msg: "Messaggio provvisorio appartamento 216 - punto 1"},
+  {lat: 41.22816/100 + 0.00216, lng: 16.30616/100 + 0.00216, msg: "Messaggio provvisorio appartamento 216 - punto 2"},
+  {lat: 41.22816/100 + 0.00216, lng: 16.30616/100 + 0.00216, msg: "Messaggio provvisorio appartamento 216 - punto 3"},
+];
+
+apartments["217"] = [
+  {lat: 41.22817/100 + 0.00217, lng: 16.30617/100 + 0.00217, msg: "Messaggio provvisorio appartamento 217 - punto 1"},
+  {lat: 41.22817/100 + 0.00217, lng: 16.30617/100 + 0.00217, msg: "Messaggio provvisorio appartamento 217 - punto 2"},
+  {lat: 41.22817/100 + 0.00217, lng: 16.30617/100 + 0.00217, msg: "Messaggio provvisorio appartamento 217 - punto 3"},
+];
+
+apartments["218"] = [
+  {lat: 41.22818/100 + 0.00218, lng: 16.30618/100 + 0.00218, msg: "Messaggio provvisorio appartamento 218 - punto 1"},
+  {lat: 41.22818/100 + 0.00218, lng: 16.30618/100 + 0.00218, msg: "Messaggio provvisorio appartamento 218 - punto 2"},
+  {lat: 41.22818/100 + 0.00218, lng: 16.30618/100 + 0.00218, msg: "Messaggio provvisorio appartamento 218 - punto 3"},
+];
+
+apartments["219"] = [
+  {lat: 41.22819/100 + 0.00219, lng: 16.30619/100 + 0.00219, msg: "Messaggio provvisorio appartamento 219 - punto 1"},
+  {lat: 41.22819/100 + 0.00219, lng: 16.30619/100 + 0.00219, msg: "Messaggio provvisorio appartamento 219 - punto 2"},
+  {lat: 41.22819/100 + 0.00219, lng: 16.30619/100 + 0.00219, msg: "Messaggio provvisorio appartamento 219 - punto 3"},
+];
+
+apartments["220"] = [
+  {lat: 41.22820/100 + 0.00220, lng: 16.30620/100 + 0.00220, msg: "Messaggio provvisorio appartamento 220 - punto 1"},
+  {lat: 41.22820/100 + 0.00220, lng: 16.30620/100 + 0.00220, msg: "Messaggio provvisorio appartamento 220 - punto 2"},
+  {lat: 41.22820/100 + 0.00220, lng: 16.30620/100 + 0.00220, msg: "Messaggio provvisorio appartamento 220 - punto 3"},
+];
+
+apartments["221"] = [
+  {lat: 41.22821/100 + 0.00221, lng: 16.30621/100 + 0.00221, msg: "Messaggio provvisorio appartamento 221 - punto 1"},
+  {lat: 41.22821/100 + 0.00221, lng: 16.30621/100 + 0.00221, msg: "Messaggio provvisorio appartamento 221 - punto 2"},
+  {lat: 41.22821/100 + 0.00221, lng: 16.30621/100 + 0.00221, msg: "Messaggio provvisorio appartamento 221 - punto 3"},
+];
+
+apartments["222"] = [
+  {lat: 41.22822/100 + 0.00222, lng: 16.30622/100 + 0.00222, msg: "Messaggio provvisorio appartamento 222 - punto 1"},
+  {lat: 41.22822/100 + 0.00222, lng: 16.30622/100 + 0.00222, msg: "Messaggio provvisorio appartamento 222 - punto 2"},
+  {lat: 41.22822/100 + 0.00222, lng: 16.30622/100 + 0.00222, msg: "Messaggio provvisorio appartamento 222 - punto 3"},
+];
+
+apartments["223"] = [
+  {lat: 41.22823/100 + 0.00223, lng: 16.30623/100 + 0.00223, msg: "Messaggio provvisorio appartamento 223 - punto 1"},
+  {lat: 41.22823/100 + 0.00223, lng: 16.30623/100 + 0.00223, msg: "Messaggio provvisorio appartamento 223 - punto 2"},
+  {lat: 41.22823/100 + 0.00223, lng: 16.30623/100 + 0.00223, msg: "Messaggio provvisorio appartamento 223 - punto 3"},
+];
+
+apartments["224"] = [
+  {lat: 41.22824/100 + 0.00224, lng: 16.30624/100 + 0.00224, msg: "Messaggio provvisorio appartamento 224 - punto 1"},
+  {lat: 41.22824/100 + 0.00224, lng: 16.30624/100 + 0.00224, msg: "Messaggio provvisorio appartamento 224 - punto 2"},
+  {lat: 41.22824/100 + 0.00224, lng: 16.30624/100 + 0.00224, msg: "Messaggio provvisorio appartamento 224 - punto 3"},
+];
+
+apartments["225"] = [
+  {lat: 41.22825/100 + 0.00225, lng: 16.30625/100 + 0.00225, msg: "Messaggio provvisorio appartamento 225 - punto 1"},
+  {lat: 41.22825/100 + 0.00225, lng: 16.30625/100 + 0.00225, msg: "Messaggio provvisorio appartamento 225 - punto 2"},
+  {lat: 41.22825/100 + 0.00225, lng: 16.30625/100 + 0.00225, msg: "Messaggio provvisorio appartamento 225 - punto 3"},
+];
+
+apartments["226"] = [
+  {lat: 41.22826/100 + 0.00226, lng: 16.30626/100 + 0.00226, msg: "Messaggio provvisorio appartamento 226 - punto 1"},
+  {lat: 41.22826/100 + 0.00226, lng: 16.30626/100 + 0.00226, msg: "Messaggio provvisorio appartamento 226 - punto 2"},
+  {lat: 41.22826/100 + 0.00226, lng: 16.30626/100 + 0.00226, msg: "Messaggio provvisorio appartamento 226 - punto 3"},
+];
+
+apartments["227"] = [
+  {lat: 41.22827/100 + 0.00227, lng: 16.30627/100 + 0.00227, msg: "Messaggio provvisorio appartamento 227 - punto 1"},
+  {lat: 41.22827/100 + 0.00227, lng: 16.30627/100 + 0.00227, msg: "Messaggio provvisorio appartamento 227 - punto 2"},
+  {lat: 41.22827/100 + 0.00227, lng: 16.30627/100 + 0.00227, msg: "Messaggio provvisorio appartamento 227 - punto 3"},
+];
+
+apartments["228"] = [
+  {lat: 41.22828/100 + 0.00228, lng: 16.30628/100 + 0.00228, msg: "Messaggio provvisorio appartamento 228 - punto 1"},
+  {lat: 41.22828/100 + 0.00228, lng: 16.30628/100 + 0.00228, msg: "Messaggio provvisorio appartamento 228 - punto 2"},
+  {lat: 41.22828/100 + 0.00228, lng: 16.30628/100 + 0.00228, msg: "Messaggio provvisorio appartamento 228 - punto 3"},
+];
+
+apartments["229"] = [
+  {lat: 41.22829/100 + 0.00229, lng: 16.30629/100 + 0.00229, msg: "Messaggio provvisorio appartamento 229 - punto 1"},
+  {lat: 41.22829/100 + 0.00229, lng: 16.30629/100 + 0.00229, msg: "Messaggio provvisorio appartamento 229 - punto 2"},
+  {lat: 41.22829/100 + 0.00229, lng: 16.30629/100 + 0.00229, msg: "Messaggio provvisorio appartamento 229 - punto 3"},
+];
+
+apartments["230"] = [
+  {lat: 41.22830/100 + 0.00230, lng: 16.30630/100 + 0.00230, msg: "Messaggio provvisorio appartamento 230 - punto 1"},
+  {lat: 41.22830/100 + 0.00230, lng: 16.30630/100 + 0.00230, msg: "Messaggio provvisorio appartamento 230 - punto 2"},
+  {lat: 41.22830/100 + 0.00230, lng: 16.30630/100 + 0.00230, msg: "Messaggio provvisorio appartamento 230 - punto 3"},
+];
+
+apartments["231"] = [
+  {lat: 41.22831/100 + 0.00231, lng: 16.30631/100 + 0.00231, msg: "Messaggio provvisorio appartamento 231 - punto 1"},
+  {lat: 41.22831/100 + 0.00231, lng: 16.30631/100 + 0.00231, msg: "Messaggio provvisorio appartamento 231 - punto 2"},
+  {lat: 41.22831/100 + 0.00231, lng: 16.30631/100 + 0.00231, msg: "Messaggio provvisorio appartamento 231 - punto 3"},
+];
+
+apartments["232"] = [
+  {lat: 41.22832/100 + 0.00232, lng: 16.30632/100 + 0.00232, msg: "Messaggio provvisorio appartamento 232 - punto 1"},
+  {lat: 41.22832/100 + 0.00232, lng: 16.30632/100 + 0.00232, msg: "Messaggio provvisorio appartamento 232 - punto 2"},
+  {lat: 41.22832/100 + 0.00232, lng: 16.30632/100 + 0.00232, msg: "Messaggio provvisorio appartamento 232 - punto 3"},
+];
+
+apartments["233"] = [
+  {lat: 41.22833/100 + 0.00233, lng: 16.30633/100 + 0.00233, msg: "Messaggio provvisorio appartamento 233 - punto 1"},
+  {lat: 41.22833/100 + 0.00233, lng: 16.30633/100 + 0.00233, msg: "Messaggio provvisorio appartamento 233 - punto 2"},
+  {lat: 41.22833/100 + 0.00233, lng: 16.30633/100 + 0.00233, msg: "Messaggio provvisorio appartamento 233 - punto 3"},
+];
+
+apartments["234"] = [
+  {lat: 41.22834/100 + 0.00234, lng: 16.30634/100 + 0.00234, msg: "Messaggio provvisorio appartamento 234 - punto 1"},
+  {lat: 41.22834/100 + 0.00234, lng: 16.30634/100 + 0.00234, msg: "Messaggio provvisorio appartamento 234 - punto 2"},
+  {lat: 41.22834/100 + 0.00234, lng: 16.30634/100 + 0.00234, msg: "Messaggio provvisorio appartamento 234 - punto 3"},
+];
+
+apartments["235"] = [
+  {lat: 41.22835/100 + 0.00235, lng: 16.30635/100 + 0.00235, msg: "Messaggio provvisorio appartamento 235 - punto 1"},
+  {lat: 41.22835/100 + 0.00235, lng: 16.30635/100 + 0.00235, msg: "Messaggio provvisorio appartamento 235 - punto 2"},
+  {lat: 41.22835/100 + 0.00235, lng: 16.30635/100 + 0.00235, msg: "Messaggio provvisorio appartamento 235 - punto 3"},
+];
+
+apartments["236"] = [
+  {lat: 41.22836/100 + 0.00236, lng: 16.30636/100 + 0.00236, msg: "Messaggio provvisorio appartamento 236 - punto 1"},
+  {lat: 41.22836/100 + 0.00236, lng: 16.30636/100 + 0.00236, msg: "Messaggio provvisorio appartamento 236 - punto 2"},
+  {lat: 41.22836/100 + 0.00236, lng: 16.30636/100 + 0.00236, msg: "Messaggio provvisorio appartamento 236 - punto 3"},
+];
+
+apartments["237"] = [
+  {lat: 41.22837/100 + 0.00237, lng: 16.30637/100 + 0.00237, msg: "Messaggio provvisorio appartamento 237 - punto 1"},
+  {lat: 41.22837/100 + 0.00237, lng: 16.30637/100 + 0.00237, msg: "Messaggio provvisorio appartamento 237 - punto 2"},
+  {lat: 41.22837/100 + 0.00237, lng: 16.30637/100 + 0.00237, msg: "Messaggio provvisorio appartamento 237 - punto 3"},
+];
+
+apartments["238"] = [
+  {lat: 41.22838/100 + 0.00238, lng: 16.30638/100 + 0.00238, msg: "Messaggio provvisorio appartamento 238 - punto 1"},
+  {lat: 41.22838/100 + 0.00238, lng: 16.30638/100 + 0.00238, msg: "Messaggio provvisorio appartamento 238 - punto 2"},
+  {lat: 41.22838/100 + 0.00238, lng: 16.30638/100 + 0.00238, msg: "Messaggio provvisorio appartamento 238 - punto 3"},
+];
+
+apartments["239"] = [
+  {lat: 41.22839/100 + 0.00239, lng: 16.30639/100 + 0.00239, msg: "Messaggio provvisorio appartamento 239 - punto 1"},
+  {lat: 41.22839/100 + 0.00239, lng: 16.30639/100 + 0.00239, msg: "Messaggio provvisorio appartamento 239 - punto 2"},
+  {lat: 41.22839/100 + 0.00239, lng: 16.30639/100 + 0.00239, msg: "Messaggio provvisorio appartamento 239 - punto 3"},
+];
+
+apartments["240"] = [
+  {lat: 41.22840/100 + 0.00240, lng: 16.30640/100 + 0.00240, msg: "Messaggio provvisorio appartamento 240 - punto 1"},
+  {lat: 41.22840/100 + 0.00240, lng: 16.30640/100 + 0.00240, msg: "Messaggio provvisorio appartamento 240 - punto 2"},
+  {lat: 41.22840/100 + 0.00240, lng: 16.30640/100 + 0.00240, msg: "Messaggio provvisorio appartamento 240 - punto 3"},
+];
+
+apartments["241"] = [
+  {lat: 41.22841/100 + 0.00241, lng: 16.30641/100 + 0.00241, msg: "Messaggio provvisorio appartamento 241 - punto 1"},
+  {lat: 41.22841/100 + 0.00241, lng: 16.30641/100 + 0.00241, msg: "Messaggio provvisorio appartamento 241 - punto 2"},
+  {lat: 41.22841/100 + 0.00241, lng: 16.30641/100 + 0.00241, msg: "Messaggio provvisorio appartamento 241 - punto 3"},
+];
+
+apartments["242"] = [
+  {lat: 41.22842/100 + 0.00242, lng: 16.30642/100 + 0.00242, msg: "Messaggio provvisorio appartamento 242 - punto 1"},
+  {lat: 41.22842/100 + 0.00242, lng: 16.30642/100 + 0.00242, msg: "Messaggio provvisorio appartamento 242 - punto 2"},
+  {lat: 41.22842/100 + 0.00242, lng: 16.30642/100 + 0.00242, msg: "Messaggio provvisorio appartamento 242 - punto 3"},
+];
+
+apartments["243"] = [
+  {lat: 41.22843/100 + 0.00243, lng: 16.30643/100 + 0.00243, msg: "Messaggio provvisorio appartamento 243 - punto 1"},
+  {lat: 41.22843/100 + 0.00243, lng: 16.30643/100 + 0.00243, msg: "Messaggio provvisorio appartamento 243 - punto 2"},
+  {lat: 41.22843/100 + 0.00243, lng: 16.30643/100 + 0.00243, msg: "Messaggio provvisorio appartamento 243 - punto 3"},
+];
+
+apartments["244"] = [
+  {lat: 41.22844/100 + 0.00244, lng: 16.30644/100 + 0.00244, msg: "Messaggio provvisorio appartamento 244 - punto 1"},
+  {lat: 41.22844/100 + 0.00244, lng: 16.30644/100 + 0.00244, msg: "Messaggio provvisorio appartamento 244 - punto 2"},
+  {lat: 41.22844/100 + 0.00244, lng: 16.30644/100 + 0.00244, msg: "Messaggio provvisorio appartamento 244 - punto 3"},
+];
+
+apartments["245"] = [
+  {lat: 41.22845/100 + 0.00245, lng: 16.30645/100 + 0.00245, msg: "Messaggio provvisorio appartamento 245 - punto 1"},
+  {lat: 41.22845/100 + 0.00245, lng: 16.30645/100 + 0.00245, msg: "Messaggio provvisorio appartamento 245 - punto 2"},
+  {lat: 41.22845/100 + 0.00245, lng: 16.30645/100 + 0.00245, msg: "Messaggio provvisorio appartamento 245 - punto 3"},
+];
+
+apartments["246"] = [
+  {lat: 41.22846/100 + 0.00246, lng: 16.30646/100 + 0.00246, msg: "Messaggio provvisorio appartamento 246 - punto 1"},
+  {lat: 41.22846/100 + 0.00246, lng: 16.30646/100 + 0.00246, msg: "Messaggio provvisorio appartamento 246 - punto 2"},
+  {lat: 41.22846/100 + 0.00246, lng: 16.30646/100 + 0.00246, msg: "Messaggio provvisorio appartamento 246 - punto 3"},
+];
+
+apartments["247"] = [
+  {lat: 41.22847/100 + 0.00247, lng: 16.30647/100 + 0.00247, msg: "Messaggio provvisorio appartamento 247 - punto 1"},
+  {lat: 41.22847/100 + 0.00247, lng: 16.30647/100 + 0.00247, msg: "Messaggio provvisorio appartamento 247 - punto 2"},
+  {lat: 41.22847/100 + 0.00247, lng: 16.30647/100 + 0.00247, msg: "Messaggio provvisorio appartamento 247 - punto 3"},
+];
+
+apartments["248"] = [
+  {lat: 41.22848/100 + 0.00248, lng: 16.30648/100 + 0.00248, msg: "Messaggio provvisorio appartamento 248 - punto 1"},
+  {lat: 41.22848/100 + 0.00248, lng: 16.30648/100 + 0.00248, msg: "Messaggio provvisorio appartamento 248 - punto 2"},
+  {lat: 41.22848/100 + 0.00248, lng: 16.30648/100 + 0.00248, msg: "Messaggio provvisorio appartamento 248 - punto 3"},
+];
+
+apartments["249"] = [
+  {lat: 41.22849/100 + 0.00249, lng: 16.30649/100 + 0.00249, msg: "Messaggio provvisorio appartamento 249 - punto 1"},
+  {lat: 41.22849/100 + 0.00249, lng: 16.30649/100 + 0.00249, msg: "Messaggio provvisorio appartamento 249 - punto 2"},
+  {lat: 41.22849/100 + 0.00249, lng: 16.30649/100 + 0.00249, msg: "Messaggio provvisorio appartamento 249 - punto 3"},
+];
+
+apartments["250"] = [
+  {lat: 41.22850/100 + 0.00250, lng: 16.30650/100 + 0.00250, msg: "Messaggio provvisorio appartamento 250 - punto 1"},
+  {lat: 41.22850/100 + 0.00250, lng: 16.30650/100 + 0.00250, msg: "Messaggio provvisorio appartamento 250 - punto 2"},
+  {lat: 41.22850/100 + 0.00250, lng: 16.30650/100 + 0.00250, msg: "Messaggio provvisorio appartamento 250 - punto 3"},
+];
+
+apartments["251"] = [
+  {lat: 41.22851/100 + 0.00251, lng: 16.30651/100 + 0.00251, msg: "Messaggio provvisorio appartamento 251 - punto 1"},
+  {lat: 41.22851/100 + 0.00251, lng: 16.30651/100 + 0.00251, msg: "Messaggio provvisorio appartamento 251 - punto 2"},
+  {lat: 41.22851/100 + 0.00251, lng: 16.30651/100 + 0.00251, msg: "Messaggio provvisorio appartamento 251 - punto 3"},
+];
+
+apartments["252"] = [
+  {lat: 41.22852/100 + 0.00252, lng: 16.30652/100 + 0.00252, msg: "Messaggio provvisorio appartamento 252 - punto 1"},
+  {lat: 41.22852/100 + 0.00252, lng: 16.30652/100 + 0.00252, msg: "Messaggio provvisorio appartamento 252 - punto 2"},
+  {lat: 41.22852/100 + 0.00252, lng: 16.30652/100 + 0.00252, msg: "Messaggio provvisorio appartamento 252 - punto 3"},
+];
+
+apartments["253"] = [
+  {lat: 41.22853/100 + 0.00253, lng: 16.30653/100 + 0.00253, msg: "Messaggio provvisorio appartamento 253 - punto 1"},
+  {lat: 41.22853/100 + 0.00253, lng: 16.30653/100 + 0.00253, msg: "Messaggio provvisorio appartamento 253 - punto 2"},
+  {lat: 41.22853/100 + 0.00253, lng: 16.30653/100 + 0.00253, msg: "Messaggio provvisorio appartamento 253 - punto 3"},
+];
+
+apartments["254"] = [
+  {lat: 41.22854/100 + 0.00254, lng: 16.30654/100 + 0.00254, msg: "Messaggio provvisorio appartamento 254 - punto 1"},
+  {lat: 41.22854/100 + 0.00254, lng: 16.30654/100 + 0.00254, msg: "Messaggio provvisorio appartamento 254 - punto 2"},
+  {lat: 41.22854/100 + 0.00254, lng: 16.30654/100 + 0.00254, msg: "Messaggio provvisorio appartamento 254 - punto 3"},
+];
+
+apartments["255"] = [
+  {lat: 41.22855/100 + 0.00255, lng: 16.30655/100 + 0.00255, msg: "Messaggio provvisorio appartamento 255 - punto 1"},
+  {lat: 41.22855/100 + 0.00255, lng: 16.30655/100 + 0.00255, msg: "Messaggio provvisorio appartamento 255 - punto 2"},
+  {lat: 41.22855/100 + 0.00255, lng: 16.30655/100 + 0.00255, msg: "Messaggio provvisorio appartamento 255 - punto 3"},
+];
+
+apartments["256"] = [
+  {lat: 41.22856/100 + 0.00256, lng: 16.30656/100 + 0.00256, msg: "Messaggio provvisorio appartamento 256 - punto 1"},
+  {lat: 41.22856/100 + 0.00256, lng: 16.30656/100 + 0.00256, msg: "Messaggio provvisorio appartamento 256 - punto 2"},
+  {lat: 41.22856/100 + 0.00256, lng: 16.30656/100 + 0.00256, msg: "Messaggio provvisorio appartamento 256 - punto 3"},
+];
+
+apartments["257"] = [
+  {lat: 41.22857/100 + 0.00257, lng: 16.30657/100 + 0.00257, msg: "Messaggio provvisorio appartamento 257 - punto 1"},
+  {lat: 41.22857/100 + 0.00257, lng: 16.30657/100 + 0.00257, msg: "Messaggio provvisorio appartamento 257 - punto 2"},
+  {lat: 41.22857/100 + 0.00257, lng: 16.30657/100 + 0.00257, msg: "Messaggio provvisorio appartamento 257 - punto 3"},
+];
+
+apartments["258"] = [
+  {lat: 41.22958/100 + 0.00258, lng: 16.30758/100 + 0.00258, msg: "Messaggio provvisorio appartamento 258 - punto 1"},
+  {lat: 41.22958/100 + 0.00258, lng: 16.30758/100 + 0.00258, msg: "Messaggio provvisorio appartamento 258 - punto 2"},
+  {lat: 41.22958/100 + 0.00258, lng: 16.30758/100 + 0.00258, msg: "Messaggio provvisorio appartamento 258 - punto 3"},
+];
+
+apartments["260"] = [
+  {lat: 41.22960/100 + 0.00260, lng: 16.30760/100 + 0.00260, msg: "Messaggio provvisorio appartamento 260 - punto 1"},
+  {lat: 41.22960/100 + 0.00260, lng: 16.30760/100 + 0.00260, msg: "Messaggio provvisorio appartamento 260 - punto 2"},
+  {lat: 41.22960/100 + 0.00260, lng: 16.30760/100 + 0.00260, msg: "Messaggio provvisorio appartamento 260 - punto 3"},
+];
+
+apartments["302"] = [
+  {lat: 41.2302/100 + 0.00302, lng: 16.3082/100 + 0.00302, msg: "Messaggio provvisorio appartamento 302 - punto 1"},
+  {lat: 41.2302/100 + 0.00302, lng: 16.3082/100 + 0.00302, msg: "Messaggio provvisorio appartamento 302 - punto 2"},
+  {lat: 41.2302/100 + 0.00302, lng: 16.3082/100 + 0.00302, msg: "Messaggio provvisorio appartamento 302 - punto 3"},
+];
+
+apartments["304"] = [
+  {lat: 41.2304/100 + 0.00304, lng: 16.3084/100 + 0.00304, msg: "Messaggio provvisorio appartamento 304 - punto 1"},
+  {lat: 41.2304/100 + 0.00304, lng: 16.3084/100 + 0.00304, msg: "Messaggio provvisorio appartamento 304 - punto 2"},
+  {lat: 41.2304/100 + 0.00304, lng: 16.3084/100 + 0.00304, msg: "Messaggio provvisorio appartamento 304 - punto 3"},
+];
+
+apartments["306"] = [
+  {lat: 41.2306/100 + 0.00306, lng: 16.3086/100 + 0.00306, msg: "Messaggio provvisorio appartamento 306 - punto 1"},
+  {lat: 41.2306/100 + 0.00306, lng: 16.3086/100 + 0.00306, msg: "Messaggio provvisorio appartamento 306 - punto 2"},
+  {lat: 41.2306/100 + 0.00306, lng: 16.3086/100 + 0.00306, msg: "Messaggio provvisorio appartamento 306 - punto 3"},
+];
+
+apartments["308"] = [
+  {lat: 41.2308/100 + 0.00308, lng: 16.3088/100 + 0.00308, msg: "Messaggio provvisorio appartamento 308 - punto 1"},
+  {lat: 41.2308/100 + 0.00308, lng: 16.3088/100 + 0.00308, msg: "Messaggio provvisorio appartamento 308 - punto 2"},
+  {lat: 41.2308/100 + 0.00308, lng: 16.3088/100 + 0.00308, msg: "Messaggio provvisorio appartamento 308 - punto 3"},
+];
+
+apartments["310"] = [
+  {lat: 41.23010/100 + 0.00310, lng: 16.30810/100 + 0.00310, msg: "Messaggio provvisorio appartamento 310 - punto 1"},
+  {lat: 41.23010/100 + 0.00310, lng: 16.30810/100 + 0.00310, msg: "Messaggio provvisorio appartamento 310 - punto 2"},
+  {lat: 41.23010/100 + 0.00310, lng: 16.30810/100 + 0.00310, msg: "Messaggio provvisorio appartamento 310 - punto 3"},
+];
+
+apartments["312"] = [
+  {lat: 41.23012/100 + 0.00312, lng: 16.30812/100 + 0.00312, msg: "Messaggio provvisorio appartamento 312 - punto 1"},
+  {lat: 41.23012/100 + 0.00312, lng: 16.30812/100 + 0.00312, msg: "Messaggio provvisorio appartamento 312 - punto 2"},
+  {lat: 41.23012/100 + 0.00312, lng: 16.30812/100 + 0.00312, msg: "Messaggio provvisorio appartamento 312 - punto 3"},
+];
+
+apartments["314"] = [
+  {lat: 41.23014/100 + 0.00314, lng: 16.30814/100 + 0.00314, msg: "Messaggio provvisorio appartamento 314 - punto 1"},
+  {lat: 41.23014/100 + 0.00314, lng: 16.30814/100 + 0.00314, msg: "Messaggio provvisorio appartamento 314 - punto 2"},
+  {lat: 41.23014/100 + 0.00314, lng: 16.30814/100 + 0.00314, msg: "Messaggio provvisorio appartamento 314 - punto 3"},
+];
+
+function distance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const toRad = x => x * Math.PI / 180;
+  const φ1 = toRad(lat1), φ2 = toRad(lat2);
+  const Δφ = toRad(lat2 - lat1);
+  const Δλ = toRad(lon2 - lon1);
+  const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function speak(text) {
+  const utter = new SpeechSynthesisUtterance(text);
+  speechSynthesis.speak(utter);
+}
+
+function startRoute() {
+  const apt = document.getElementById("aptNumber").value.trim();
+  if (!apartments[apt]) {
+    document.getElementById("output").innerText = "Appartamento non trovato!";
+    return;
+  }
+
+  checkpoints = apartments[apt];
+  currentStep = 0;
+  document.getElementById("inputDiv").style.display = "none";
+  document.getElementById("output").innerText = "Attiva GPS e segui le istruzioni...";
+
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      document.getElementById("output").innerText = `Posizione attuale: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+      if (currentStep < checkpoints.length) {
+        const cp = checkpoints[currentStep];
+        const dist = distance(lat, lng, cp.lat, cp.lng);
+        if (dist < RADIUS) {
+          document.getElementById("output").innerText = cp.msg;
+          speak(cp.msg);
+          currentStep++;
+        }
       } else {
-        document.getElementById("output").innerText = "GPS non supportato.";
+        document.getElementById("output").innerText = "Sei arrivato a destinazione!";
+        speak("Sei arrivato a destinazione!");
       }
-    }
-  </script>
+
+    }, err => {
+      document.getElementById("output").innerText = "Errore GPS: " + err.message;
+    }, {enableHighAccuracy: true});
+  } else {
+    document.getElementById("output").innerText = "GPS non supportato.";
+  }
+}
+</script>
 </body>
 </html>
