@@ -500,7 +500,7 @@
                 <label for="apartmentNumber">Inserisci il numero dell'appartamento:</label>
                 <input type="number" id="apartmentNumber" placeholder="es. 150" min="101" max="314" disabled>
                 <div id="inputWarning" style="margin-top: 8px; padding: 10px; background: #fed7d7; color: #c53030; border-radius: 8px; font-size: 0.9em; display: block;">
-                    🚫 Devi essere nell'Area Esterna Reception per inserire l'appartamento
+                    🚫 Devi essere nell'Area Esterna Reception o Fronte Ristorante per inserire l'appartamento
                 </div>
             </div>
 
@@ -609,12 +609,26 @@
             { lat: 39.851028, lng: 18.193417 }  // 39°51'03.7"N 18°11'36.3"E
         ];
 
+        // Area 2: Fronte Ristorante (coordinate precise)
+        const restaurantPolygon = [
+            { lat: 39.851128, lng: 18.193167 }, // 39°51'04.6"N 18°11'35.4"E
+            { lat: 39.851125, lng: 18.193167 }, // 39°51'04.5"N 18°11'35.4"E
+            { lat: 39.851122, lng: 18.193139 }, // 39°51'04.4"N 18°11'35.3"E
+            { lat: 39.851128, lng: 18.193056 }, // 39°51'04.6"N 18°11'35.0"E
+            { lat: 39.851131, lng: 18.193083 }  // 39°51'04.7"N 18°11'35.1"E
+        ];
+
         // Zone GPS del resort configurate (coordinate reali)
         const resortZones = {
             reception: {
                 name: "Area Esterna Reception",
                 polygon: receptionPolygon,
                 message: "📋 Perfetto! Sei nell'area esterna della reception. La navigazione può iniziare da qui."
+            },
+            restaurant: {
+                name: "Fronte Ristorante",
+                polygon: restaurantPolygon,
+                message: "🍽️ Fronte Ristorante: zona autorizzata per la navigazione."
             },
             pool: {
                 name: "Area Piscina",
@@ -785,23 +799,23 @@
             const inputWarning = document.getElementById('inputWarning');
             const startBtn = document.getElementById('startBtn');
             
-            const isInReception = isUserInReceptionArea();
+            const isInAuthorizedArea = isUserInAuthorizedArea();
             
-            if (isInReception) {
-                // Utente nell'area reception - abilita input
+            if (isInAuthorizedArea) {
+                // Utente in area autorizzata - abilita input
                 apartmentInput.disabled = false;
                 apartmentInput.placeholder = "es. 150";
                 inputWarning.style.display = 'none';
                 startBtn.disabled = false;
                 startBtn.textContent = '🧭 Inizia Navigazione';
             } else {
-                // Utente fuori dall'area reception - disabilita input
+                // Utente fuori dalle aree autorizzate - disabilita input
                 apartmentInput.disabled = true;
                 apartmentInput.value = '';
-                apartmentInput.placeholder = "Accesso limitato - vai alla Reception";
+                apartmentInput.placeholder = "Accesso limitato - vai alla Reception o Ristorante";
                 inputWarning.style.display = 'block';
                 startBtn.disabled = true;
-                startBtn.textContent = '🚫 Area Reception Richiesta';
+                startBtn.textContent = '🚫 Area Autorizzata Richiesta';
             }
         }
 
@@ -883,9 +897,14 @@
                 return resortZones.reception;
             }
 
+            // Controllo speciale per l'area ristorante (poligonale)
+            if (isPointInPolygon(userLocation, restaurantPolygon)) {
+                return resortZones.restaurant;
+            }
+
             // Controllo per le altre zone (circolari)
             for (const [key, zone] of Object.entries(resortZones)) {
-                if (key === 'reception') continue; // Già controllata sopra
+                if (key === 'reception' || key === 'restaurant') continue; // Già controllate sopra
                 
                 if (zone.lat && zone.lng && zone.radius) {
                     const distance = calculateDistance(
@@ -970,20 +989,21 @@
                 return;
             }
 
-            // CONTROLLO RIGOROSO: Devi essere ESATTAMENTE nell'Area Reception
+            // CONTROLLO RIGOROSO: Devi essere in un'area autorizzata
             const currentZone = detectCurrentZone();
-            const isInReception = isUserInReceptionArea();
+            const isInAuthorizedArea = isUserInAuthorizedArea();
             
-            if (!isInReception) {
+            if (!isInAuthorizedArea) {
                 showError(`🚫 ACCESSO NEGATO! 
                 
-Devi essere ESATTAMENTE nell'Area Esterna Reception per iniziare la navigazione.
+Devi essere in una delle AREE AUTORIZZATE per iniziare la navigazione.
                 
 📍 Posizione attuale: ${currentZone ? currentZone.name : 'Zona sconosciuta'}
-📐 Area richiesta: Poligono Reception Esterna
-⚠️ Coordinate precise richieste: 39°51'04.0"N 18°11'36.2"E
+📐 Aree autorizzate: 
+   • Area Esterna Reception (39°51'04.0"N 18°11'36.2"E)
+   • Fronte Ristorante (39°51'04.6"N 18°11'35.4"E)
 
-🚶‍♂️ Recati nell'area esterna della Reception e riprova!`);
+🚶‍♂️ Recati in una delle aree autorizzate e riprova!`);
                 return;
             }
 
@@ -1014,6 +1034,15 @@ Devi essere ESATTAMENTE nell'Area Esterna Reception per iniziare la navigazione.
             
             // Controllo se l'utente è dentro il poligono esatto della reception
             return isPointInPolygon(userLocation, receptionPolygon);
+        }
+
+        // Funzione per controllo aree autorizzate (Reception O Ristorante)
+        function isUserInAuthorizedArea() {
+            if (!userLocation) return false;
+            
+            // Controllo se l'utente è in una delle aree autorizzate
+            return isPointInPolygon(userLocation, receptionPolygon) || 
+                   isPointInPolygon(userLocation, restaurantPolygon);
         }
 
         // Funzione per mostrare messaggi di successo
@@ -1163,20 +1192,22 @@ Devi essere ESATTAMENTE nell'Area Esterna Reception per iniziare la navigazione.
             alert(`🏖️ VILLA RESORT GPS NAVIGATOR
 
 🚫 CONTROLLO ACCESSO RIGOROSO:
-La navigazione è BLOCCATA se non sei nell'Area Esterna Reception!
+La navigazione è BLOCCATA se non sei in un'area autorizzata!
 
 🎯 PROCEDURA OBBLIGATORIA:
-1. Vai FISICAMENTE nell'Area Esterna Reception del resort
+1. Vai FISICAMENTE in una delle AREE AUTORIZZATE:
+   • Area Esterna Reception
+   • Fronte Ristorante
 2. Attendi che il GPS rilevi la tua posizione
-3. Verifica che mostri "Zona: Area Esterna Reception"
+3. Verifica che mostri una delle zone autorizzate
 4. Solo allora inserisci il numero appartamento
 5. Clicca "Inizia Navigazione"
 
 ⚠️ SISTEMA DI SICUREZZA POLIGONALE:
-• Area precisa: Poligono definito da 4 coordinate GPS
-• Coordinate: 39°51'04.0"N 18°11'36.2"E (e altre 3)
+• AREA 1 - Reception: 39°51'04.0"N 18°11'36.2"E (+ altre 3 coordinate)
+• AREA 2 - Ristorante: 39°51'04.6"N 18°11'35.4"E (+ altre 4 coordinate)
 • Controllo GPS in tempo reale
-• Accesso negato se fuori dal poligono esatto
+• Accesso negato se fuori dai poligoni esatti
 • Rilevamento automatico della posizione
 
 🏢 APPARTAMENTI DISPONIBILI:
@@ -1184,7 +1215,7 @@ La navigazione è BLOCCATA se non sei nell'Area Esterna Reception!
 • 258, 260 (Torre Esclusiva - VIP)
 • 302-314 (solo pari - Attico Luxury)
 
-📍 Se il sistema ti blocca, significa che NON sei dentro il poligono esatto dell'Area Esterna Reception!
+📍 Se il sistema ti blocca, significa che NON sei dentro uno dei poligoni autorizzati!
 
 📞 Assistenza: +39 123 456 789`);
         }
@@ -1221,5 +1252,5 @@ La navigazione è BLOCCATA se non sei nell'Area Esterna Reception!
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9c0ac718fc4e2',t:'MTc1NzI4NTI5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9c56a7266c4e2',t:'MTc1NzI4NTQ5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
