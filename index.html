@@ -1018,6 +1018,7 @@ apartments["314"] = [
 ];
 
 
+    // Area poligonale reception
     const receptionArea = {
       name: "Area esterno reception",
       coordinates: [
@@ -1027,6 +1028,19 @@ apartments["314"] = [
         {lat: 39.850972, lng: 18.193417}
       ],
       msg: "Sei nell'area esterna reception, qui inizia il percorso"
+    };
+
+    // Area poligonale fronte ristorante
+    const restaurantArea = {
+      name: "Area fronte ristorante",
+      coordinates: [
+        {lat: 39.851278, lng: 18.193167},
+        {lat: 39.851250, lng: 18.193167},
+        {lat: 39.851222, lng: 18.193139},
+        {lat: 39.851278, lng: 18.193056},
+        {lat: 39.851306, lng: 18.193083}
+      ],
+      msg: "Sei davanti al ristorante, prosegui verso la piazzetta"
     };
 
     function distance(lat1, lon1, lat2, lon2) {
@@ -1079,6 +1093,12 @@ apartments["314"] = [
           if (isPointInPolygon({lat, lng}, receptionArea.coordinates)) {
             document.getElementById("output").innerText = receptionArea.msg;
             speak(receptionArea.msg);
+          }
+
+          // Controllo area ristorante
+          if (isPointInPolygon({lat, lng}, restaurantArea.coordinates)) {
+            document.getElementById("output").innerText = restaurantArea.msg;
+            speak(restaurantArea.msg);
           }
 
           // Controllo checkpoint appartamento
