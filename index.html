@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navigatore Appartamenti - Villa Resort</title>
+    <title>Villa Resort GPS Navigator - GitHub Pages</title>
+    <meta name="description" content="Sistema di navigazione GPS per Villa Resort - Hostato su GitHub Pages">
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="manifest.json">
     <style>
         * {
             margin: 0;
@@ -52,6 +55,16 @@
             font-size: 0.9em;
         }
 
+        .github-badge {
+            background: #24292e;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
         .welcome-screen, .navigation-screen {
             background: white;
             border-radius: 20px;
@@ -79,6 +92,25 @@
             font-size: 3em;
             margin-bottom: 15px;
             color: #4299e1;
+        }
+
+        .github-info {
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .github-info h3 {
+            color: #0c4a6e;
+            margin-bottom: 10px;
+        }
+
+        .github-info p {
+            color: #0369a1;
+            font-size: 0.9em;
         }
 
         .gps-status {
@@ -207,6 +239,10 @@
 
         .btn-gps {
             background: linear-gradient(135deg, #ed8936, #dd6b20);
+        }
+
+        .btn-github {
+            background: linear-gradient(135deg, #24292e, #1a1e22);
         }
 
         .navigation-header {
@@ -370,6 +406,26 @@
             display: none;
         }
 
+        .install-prompt {
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .install-prompt button {
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
         @media (max-width: 480px) {
             .container {
                 padding: 15px;
@@ -386,15 +442,28 @@
         <div class="header">
             <div class="logo">🏖️</div>
             <h1>Villa Resort Navigator</h1>
-            <p class="subtitle">Sistema di navigazione GPS intelligente</p>
+            <p class="subtitle">Sistema di navigazione GPS - GitHub Pages</p>
+            <div class="github-badge">🚀 Hostato su GitHub</div>
         </div>
 
         <!-- Schermata di benvenuto -->
         <div class="welcome-screen" id="welcomeScreen">
+            <div class="github-info">
+                <h3>🌐 Web App Completa</h3>
+                <p>Ora con pieno accesso GPS grazie a GitHub Pages!</p>
+            </div>
+
+            <div class="install-prompt" id="installPrompt">
+                <div style="font-size: 1.5em; margin-bottom: 10px;">📱</div>
+                <p><strong>Installa l'app sul tuo dispositivo!</strong></p>
+                <p>Aggiungi alla schermata home per un'esperienza nativa</p>
+                <button onclick="installApp()">📲 Installa App</button>
+            </div>
+
             <div class="qr-info">
                 <div class="qr-icon">📱</div>
-                <h3>QR Code Scansionato!</h3>
-                <p>Benvenuto nel sistema di navigazione del resort</p>
+                <h3>Villa Resort Navigator</h3>
+                <p>Sistema di navigazione GPS professionale</p>
             </div>
 
             <div class="gps-status" id="gpsStatus">
@@ -403,9 +472,12 @@
             </div>
 
             <div class="location-info" id="locationInfo">
-                <h4>📍 Posizione attuale</h4>
+                <h4>📍 Posizione GPS attuale</h4>
                 <div class="coordinates" id="coordinates">Lat: -, Lng: -</div>
                 <div id="currentZone">Zona: Rilevamento in corso...</div>
+                <div style="font-size: 0.8em; color: #718096; margin-top: 8px;">
+                    Precisione: <span id="accuracy">-</span>m
+                </div>
             </div>
 
             <div class="zone-alert" id="zoneAlert">
@@ -432,7 +504,9 @@
                 📋 Visualizza Lista Appartamenti
             </button>
 
-
+            <button class="btn btn-github" onclick="showGitHubInfo()">
+                💻 Info GitHub Pages
+            </button>
         </div>
 
         <!-- Schermata di navigazione -->
@@ -446,9 +520,12 @@
             </div>
 
             <div class="location-info" id="navLocationInfo" style="display: block;">
-                <h4>📍 Posizione GPS</h4>
+                <h4>📍 Posizione GPS in tempo reale</h4>
                 <div class="coordinates" id="navCoordinates">Lat: -, Lng: -</div>
                 <div id="navCurrentZone">Zona: Rilevamento in corso...</div>
+                <div style="font-size: 0.8em; color: #718096; margin-top: 8px;">
+                    Precisione: <span id="navAccuracy">-</span>m | Velocità: <span id="speed">-</span> km/h
+                </div>
             </div>
 
             <div class="zone-alert" id="navZoneAlert">
@@ -480,6 +557,9 @@
                 <button class="control-btn" onclick="recenterMap()">
                     🎯 Centra
                 </button>
+                <button class="control-btn" onclick="shareLocation()">
+                    📤 Condividi
+                </button>
                 <button class="control-btn" onclick="showHelp()">
                     ❓ Aiuto
                 </button>
@@ -488,21 +568,48 @@
     </div>
 
     <script>
+        // Service Worker per PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').style.display = 'block';
+        });
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('App installata');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('installPrompt').style.display = 'none';
+                });
+            }
+        }
+
         // Database degli appartamenti con percorsi dettagliati
         const apartmentRoutes = {};
 
-        // Zone GPS del resort configurate
+        // Zone GPS del resort configurate (coordinate reali)
         const resortZones = {
-            // Area Reception - Punto di partenza QR Code
             reception: {
                 name: "Area Reception",
-                lat: 39.851111,  // Centro dell'area reception
-                lng: 18.193500,  // Centro dell'area reception  
-                radius: 25,      // Raggio per coprire tutta l'area esterna reception
+                lat: 39.851111,
+                lng: 18.193500,
+                radius: 25,
                 message: "📋 Benvenuto! Sei nell'area reception. Il tuo percorso inizia da qui."
             },
-
-            // Zone aggiuntive da configurare in base alle esigenze del resort
             pool: {
                 name: "Area Piscina",
                 lat: 39.851200,
@@ -510,7 +617,6 @@
                 radius: 60,
                 message: "🏊‍♂️ Area Piscina: appartamenti nelle vicinanze."
             },
-
             garden: {
                 name: "Giardino",
                 lat: 39.851000,
@@ -518,7 +624,6 @@
                 radius: 80,
                 message: "🌺 Giardino: zona relax del resort."
             },
-
             beach: {
                 name: "Zona Mare",
                 lat: 39.850800,
@@ -528,23 +633,21 @@
             }
         };
 
-        // Funzione per generare percorsi automaticamente
+        // Genera percorsi appartamenti
         function generateApartmentRoutes() {
-            // Appartamenti 101-257 (tutti)
             for (let i = 101; i <= 257; i++) {
                 apartmentRoutes[i] = {
                     name: `Appartamento ${i}`,
                     estimatedTime: "3-5 min",
                     steps: [
-                        { icon: "🚶‍♂️", text: "Segui le indicazioni GPS automatiche", distance: "Variabile" },
-                        { icon: "📍", text: "Il sistema ti guiderà zona per zona", distance: "GPS attivo" },
-                        { icon: "🎯", text: "Riceverai istruzioni quando cambi zona", distance: "Automatico" },
+                        { icon: "🚶‍♂️", text: "Segui le indicazioni GPS in tempo reale", distance: "GPS attivo" },
+                        { icon: "📍", text: "Il sistema ti guiderà automaticamente", distance: "Tracking attivo" },
+                        { icon: "🎯", text: "Riceverai notifiche per ogni zona", distance: "Automatico" },
                         { icon: "🏠", text: `Arrivo all'appartamento ${i}`, distance: "Destinazione" }
                     ]
                 };
             }
 
-            // Appartamenti 258, 260 (solo pari)
             for (let i = 258; i <= 260; i += 2) {
                 apartmentRoutes[i] = {
                     name: `Torre Esclusiva - App. ${i}`,
@@ -557,7 +660,6 @@
                 };
             }
 
-            // Appartamenti 302-314 (solo pari)
             for (let i = 302; i <= 314; i += 2) {
                 apartmentRoutes[i] = {
                     name: `Attico Luxury - App. ${i}`,
@@ -571,7 +673,6 @@
             }
         }
 
-        // Genera tutti gli appartamenti
         generateApartmentRoutes();
 
         let currentRoute = null;
@@ -583,110 +684,99 @@
         let gpsEnabled = false;
         let lastTriggeredZone = null;
 
-        // Richiesta permessi GPS
+        // Richiesta GPS ottimizzata per GitHub Pages
         function requestGPS() {
             const gpsStatus = document.getElementById('gpsStatus');
             const gpsStatusText = document.getElementById('gpsStatusText');
             const gpsBtn = document.getElementById('gpsBtn');
             
-            // Disabilita il pulsante per evitare click multipli
             gpsBtn.disabled = true;
-            gpsBtn.textContent = '⏳ Richiesta permessi GPS...';
+            gpsBtn.textContent = '⏳ Attivazione GPS...';
             
             gpsStatus.style.display = 'block';
             gpsStatus.className = 'gps-status requesting';
-            gpsStatusText.textContent = '🔐 Il browser chiederà i permessi GPS...';
+            gpsStatusText.textContent = '🔐 Richiesta permessi GPS in corso...';
 
-            // Verifica supporto geolocalizzazione
             if (!navigator.geolocation) {
                 showGPSError('❌ GPS non supportato da questo dispositivo');
                 gpsBtn.disabled = false;
-                gpsBtn.textContent = '📍 Riprova Attivazione GPS';
+                gpsBtn.textContent = '📍 GPS Non Disponibile';
                 return;
             }
 
-            // Richiesta esplicita dei permessi GPS
+            // Richiesta GPS con alta precisione
             navigator.geolocation.getCurrentPosition(
-                // Successo - permessi concessi
                 (position) => {
                     gpsEnabled = true;
                     userLocation = {
                         lat: position.coords.latitude,
-                        lng: position.coords.longitude
+                        lng: position.coords.longitude,
+                        accuracy: position.coords.accuracy,
+                        speed: position.coords.speed
                     };
                     
                     gpsStatus.className = 'gps-status';
                     gpsStatusText.textContent = '✅ GPS attivato con successo!';
                     
-                    // Abilita il pulsante di navigazione
                     document.getElementById('startBtn').disabled = false;
-                    
-                    // Nascondi il pulsante GPS e mostra info posizione
                     gpsBtn.style.display = 'none';
+                    
                     showLocationInfo();
                     startGPSTracking();
                 },
-                // Errore - permessi negati o altri problemi
                 (error) => {
                     let errorMsg = '';
-                    let buttonText = '📍 Riprova Attivazione GPS';
+                    let buttonText = '📍 Riprova GPS';
                     
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
-                            errorMsg = '🚫 Permessi GPS negati. Abilita la geolocalizzazione nelle impostazioni del browser.';
-                            buttonText = '🔄 Richiedi Permessi GPS';
+                            errorMsg = '🚫 Permessi GPS negati. Su GitHub Pages hai pieno controllo - abilita la geolocalizzazione!';
+                            buttonText = '🔄 Richiedi Permessi';
                             break;
                         case error.POSITION_UNAVAILABLE:
-                            errorMsg = '📡 Posizione GPS non disponibile. Verifica di essere all\'aperto.';
+                            errorMsg = '📡 Posizione non disponibile. Verifica la connessione GPS.';
                             break;
                         case error.TIMEOUT:
-                            errorMsg = '⏰ Timeout GPS. Riprova tra qualche secondo.';
+                            errorMsg = '⏰ Timeout GPS. Riprova.';
                             break;
                         default:
-                            errorMsg = '❌ Errore GPS sconosciuto. Riprova.';
+                            errorMsg = '❌ Errore GPS. GitHub Pages supporta completamente la geolocalizzazione.';
                     }
                     
                     showGPSError(errorMsg);
                     gpsBtn.disabled = false;
                     gpsBtn.textContent = buttonText;
                 },
-                // Opzioni per forzare la richiesta dei permessi
                 {
                     enableHighAccuracy: true,
                     timeout: 15000,
-                    maximumAge: 0  // Forza una nuova richiesta
+                    maximumAge: 0
                 }
             );
         }
 
-        // Mostra errore GPS
         function showGPSError(message) {
             const gpsStatus = document.getElementById('gpsStatus');
             const gpsStatusText = document.getElementById('gpsStatusText');
             
             gpsStatus.className = 'gps-status error';
             gpsStatusText.textContent = message;
-            
-            // Riprova automaticamente dopo 3 secondi
-            setTimeout(() => {
-                requestGPS();
-            }, 3000);
         }
 
-        // Mostra informazioni posizione
         function showLocationInfo() {
             const locationInfo = document.getElementById('locationInfo');
             const coordinates = document.getElementById('coordinates');
             const currentZone = document.getElementById('currentZone');
+            const accuracy = document.getElementById('accuracy');
             
             locationInfo.style.display = 'block';
             coordinates.textContent = `Lat: ${userLocation.lat.toFixed(6)}, Lng: ${userLocation.lng.toFixed(6)}`;
+            accuracy.textContent = Math.round(userLocation.accuracy || 0);
             
             const zone = detectCurrentZone();
             currentZone.textContent = `Zona: ${zone ? zone.name : 'Zona non riconosciuta'}`;
         }
 
-        // Avvia tracking GPS continuo
         function startGPSTracking() {
             if (gpsWatchId) {
                 navigator.geolocation.clearWatch(gpsWatchId);
@@ -696,7 +786,9 @@
                 (position) => {
                     userLocation = {
                         lat: position.coords.latitude,
-                        lng: position.coords.longitude
+                        lng: position.coords.longitude,
+                        accuracy: position.coords.accuracy,
+                        speed: position.coords.speed
                     };
                     
                     updateLocationDisplay();
@@ -707,20 +799,23 @@
                 },
                 {
                     enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 30000
+                    timeout: 10000,
+                    maximumAge: 5000
                 }
             );
         }
 
-        // Aggiorna display posizione
         function updateLocationDisplay() {
-            // Aggiorna coordinate nella schermata principale
+            // Aggiorna schermata principale
             const coordinates = document.getElementById('coordinates');
             const currentZone = document.getElementById('currentZone');
+            const accuracy = document.getElementById('accuracy');
             
             if (coordinates) {
                 coordinates.textContent = `Lat: ${userLocation.lat.toFixed(6)}, Lng: ${userLocation.lng.toFixed(6)}`;
+            }
+            if (accuracy) {
+                accuracy.textContent = Math.round(userLocation.accuracy || 0);
             }
             
             const zone = detectCurrentZone();
@@ -728,20 +823,27 @@
                 currentZone.textContent = `Zona: ${zone ? zone.name : 'Zona non riconosciuta'}`;
             }
 
-            // Aggiorna anche nella schermata di navigazione
+            // Aggiorna schermata navigazione
             const navCoordinates = document.getElementById('navCoordinates');
             const navCurrentZone = document.getElementById('navCurrentZone');
+            const navAccuracy = document.getElementById('navAccuracy');
+            const speed = document.getElementById('speed');
             
             if (navCoordinates) {
                 navCoordinates.textContent = `Lat: ${userLocation.lat.toFixed(6)}, Lng: ${userLocation.lng.toFixed(6)}`;
             }
-            
+            if (navAccuracy) {
+                navAccuracy.textContent = Math.round(userLocation.accuracy || 0);
+            }
+            if (speed) {
+                const speedKmh = userLocation.speed ? (userLocation.speed * 3.6).toFixed(1) : '0';
+                speed.textContent = speedKmh;
+            }
             if (navCurrentZone) {
                 navCurrentZone.textContent = `Zona: ${zone ? zone.name : 'Zona non riconosciuta'}`;
             }
         }
 
-        // Rileva zona attuale
         function detectCurrentZone() {
             if (!userLocation) return null;
 
@@ -758,9 +860,8 @@
             return null;
         }
 
-        // Calcola distanza tra due punti GPS
         function calculateDistance(lat1, lng1, lat2, lng2) {
-            const R = 6371000; // Raggio Terra in metri
+            const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLng = (lng2 - lng1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -770,7 +871,6 @@
             return R * c;
         }
 
-        // Controlla ingresso in nuova zona
         function checkZoneEntry() {
             const currentZone = detectCurrentZone();
             
@@ -784,38 +884,27 @@
             }
         }
 
-        // Mostra alert zona
         function showZoneAlert(zone) {
             const zoneAlert = document.getElementById('zoneAlert');
             const zoneAlertText = document.getElementById('zoneAlertText');
             const navZoneAlert = document.getElementById('navZoneAlert');
             const navZoneAlertText = document.getElementById('navZoneAlertText');
             
-            // Alert nella schermata principale
             if (zoneAlert && zoneAlertText) {
                 zoneAlertText.textContent = zone.message;
                 zoneAlert.style.display = 'block';
-                
-                setTimeout(() => {
-                    zoneAlert.style.display = 'none';
-                }, 5000);
+                setTimeout(() => zoneAlert.style.display = 'none', 5000);
             }
             
-            // Alert nella schermata di navigazione
             if (navZoneAlert && navZoneAlertText) {
                 navZoneAlertText.textContent = zone.message;
                 navZoneAlert.style.display = 'block';
-                
-                setTimeout(() => {
-                    navZoneAlert.style.display = 'none';
-                }, 5000);
+                setTimeout(() => navZoneAlert.style.display = 'none', 5000);
             }
         }
 
-        // Funzione per iniziare la navigazione
         function startNavigation() {
             const apartmentNumber = document.getElementById('apartmentNumber').value;
-            const errorMessage = document.getElementById('errorMessage');
             
             if (!apartmentNumber) {
                 showError("Inserisci il numero dell'appartamento");
@@ -828,27 +917,23 @@
             }
 
             if (!apartmentRoutes[apartmentNumber]) {
-                showError(`Appartamento ${apartmentNumber} non trovato. Controlla il numero inserito.`);
+                showError(`Appartamento ${apartmentNumber} non trovato.`);
                 return;
             }
 
             currentRoute = apartmentRoutes[apartmentNumber];
             currentStep = 0;
             
-            // Nascondi schermata di benvenuto e mostra navigazione
             document.getElementById('welcomeScreen').style.display = 'none';
             document.getElementById('navigationScreen').style.display = 'flex';
             
-            // Aggiorna le informazioni di destinazione
             document.getElementById('destinationTitle').textContent = currentRoute.name;
             document.getElementById('etaInfo').textContent = `Arrivo stimato: ${currentRoute.estimatedTime}`;
             
-            // Inizia la simulazione della navigazione
             updateNavigation();
             startNavigationSimulation();
         }
 
-        // Funzione per aggiornare la navigazione
         function updateNavigation() {
             if (!currentRoute || currentStep >= currentRoute.steps.length) return;
 
@@ -861,20 +946,16 @@
                 <div class="instruction-distance">${step.distance}</div>
             `;
 
-            // Aggiorna la barra di progresso
             const progress = ((currentStep + 1) / currentRoute.steps.length) * 100;
             document.getElementById('progressFill').style.width = `${progress}%`;
 
-            // Aggiorna i prossimi passi
             updateNextSteps();
 
-            // Audio se abilitato
             if (voiceEnabled) {
                 speakInstruction(step.text);
             }
         }
 
-        // Funzione per aggiornare i prossimi passi
         function updateNextSteps() {
             const nextStepsContainer = document.getElementById('nextSteps');
             nextStepsContainer.innerHTML = '';
@@ -895,21 +976,18 @@
             }
         }
 
-        // Simulazione della navigazione GPS
         function startNavigationSimulation() {
             navigationInterval = setInterval(() => {
                 if (currentStep < currentRoute.steps.length - 1) {
                     currentStep++;
                     updateNavigation();
                 } else {
-                    // Navigazione completata
                     clearInterval(navigationInterval);
                     showArrivalMessage();
                 }
-            }, 6000); // Cambia istruzione ogni 6 secondi per dare tempo al GPS
+            }, 8000);
         }
 
-        // Messaggio di arrivo
         function showArrivalMessage() {
             const currentInstruction = document.getElementById('currentInstruction');
             currentInstruction.innerHTML = `
@@ -924,7 +1002,6 @@
             }
         }
 
-        // Funzione per il text-to-speech
         function speakInstruction(text) {
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(text);
@@ -934,7 +1011,6 @@
             }
         }
 
-        // Toggle audio
         function toggleVoice() {
             voiceEnabled = !voiceEnabled;
             const voiceBtn = document.getElementById('voiceBtn');
@@ -949,7 +1025,21 @@
             }
         }
 
-        // Funzioni di utilità
+        function shareLocation() {
+            if (navigator.share && userLocation) {
+                navigator.share({
+                    title: 'La mia posizione - Villa Resort',
+                    text: `Sono qui: Lat ${userLocation.lat.toFixed(6)}, Lng ${userLocation.lng.toFixed(6)}`,
+                    url: `https://maps.google.com/?q=${userLocation.lat},${userLocation.lng}`
+                });
+            } else if (userLocation) {
+                const url = `https://maps.google.com/?q=${userLocation.lat},${userLocation.lng}`;
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Link posizione copiato negli appunti!');
+                });
+            }
+        }
+
         function goBack() {
             if (navigationInterval) {
                 clearInterval(navigationInterval);
@@ -961,7 +1051,6 @@
         }
 
         function recenterMap() {
-            // Simula il ricentramento della mappa
             const btn = event.target;
             btn.style.background = '#4299e1';
             btn.style.color = 'white';
@@ -971,48 +1060,79 @@
             }, 1000);
         }
 
+        function showGitHubInfo() {
+            alert(`🚀 VILLA RESORT GPS - GITHUB PAGES
+
+✅ VANTAGGI GITHUB PAGES:
+• Pieno accesso alle API GPS del browser
+• HTTPS nativo per sicurezza
+• Hosting gratuito e affidabile
+• Aggiornamenti automatici dal repository
+• PWA (Progressive Web App) supportata
+
+🔧 FUNZIONALITÀ COMPLETE:
+• GPS in tempo reale con alta precisione
+• Tracking continuo della posizione
+• Rilevamento automatico delle zone
+• Notifiche push (se installata come PWA)
+• Condivisione posizione
+• Audio istruzioni vocali
+
+📱 INSTALLAZIONE:
+• Clicca "Installa App" per aggiungerla alla home
+• Funziona offline una volta installata
+• Esperienza nativa su mobile
+
+🌐 Repository: github.com/tuonome/villa-resort-gps
+📧 Supporto: info@villaresort.com`);
+        }
+
         function showHelp() {
-            alert(`🏖️ Villa Resort Navigator GPS
+            alert(`🏖️ VILLA RESORT GPS NAVIGATOR
 
-Come usare:
-1. Attiva il GPS cliccando "Attiva GPS"
-2. Inserisci il numero dell'appartamento
-3. Il sistema ti guiderà automaticamente
-4. Riceverai notifiche quando entri in nuove zone
-5. Attiva l'audio per le indicazioni vocali
+🎯 COME USARE:
+1. Clicca "Attiva GPS" (il browser chiederà i permessi)
+2. Inserisci il numero appartamento (101-314)
+3. Inizia la navigazione GPS in tempo reale
+4. Ricevi notifiche automatiche per ogni zona
 
-Funzionalità GPS:
-• Rilevamento automatico della zona
-• Notifiche quando cambi area
-• Coordinate in tempo reale
-• Istruzioni contestuali
+📍 FUNZIONALITÀ GPS:
+• Posizione in tempo reale con precisione
+• Velocità di movimento
+• Rilevamento automatico zone resort
+• Istruzioni vocali (attivabili)
 
-Appartamenti disponibili:
+🏢 APPARTAMENTI DISPONIBILI:
 • 101-257 (tutti i numeri)
-• 258, 260 (Torre Esclusiva)
-• 302, 304, 306, 308, 310, 312, 314 (Attico Luxury)
+• 258, 260 (Torre Esclusiva - VIP)
+• 302-314 (solo pari - Attico Luxury)
 
-Per assistenza: +39 123 456 789`);
+🎯 ZONE MONITORATE:
+• Area Reception (punto partenza)
+• Area Piscina
+• Giardino
+• Zona Mare
+
+📱 PWA: Installa l'app per esperienza nativa!
+📞 Assistenza: +39 123 456 789`);
         }
 
         function showApartmentList() {
-            let listText = "🏖️ APPARTAMENTI DISPONIBILI:\n\n";
-            listText += "📍 SISTEMA GPS ATTIVO\n";
-            listText += "Il sistema rileverà automaticamente la tua zona\n\n";
-            listText += "🏢 APPARTAMENTI:\n";
-            listText += "• 101-257 (tutti i numeri)\n";
-            listText += "• 258, 260 (Torre Esclusiva)\n";
-            listText += "• 302-314 (solo pari - Attico Luxury)\n\n";
-            listText += "🎯 ZONE GPS MONITORATE:\n";
-            listText += "• Area Reception (punto partenza)\n";
-            listText += "• Area Piscina\n";
-            listText += "• Giardino\n";
-            listText += "• Zona Mare\n\n";
-            listText += "Attiva il GPS per ricevere indicazioni automatiche!";
+            let listText = "🏖️ APPARTAMENTI VILLA RESORT\n\n";
+            listText += "🚀 SISTEMA GPS GITHUB PAGES\n";
+            listText += "Tracking in tempo reale con alta precisione\n\n";
+            listText += "🏢 APPARTAMENTI STANDARD:\n";
+            listText += "• 101-257 (tutti i numeri disponibili)\n\n";
+            listText += "🏰 TORRE ESCLUSIVA (VIP):\n";
+            listText += "• 258, 260 (accesso con badge speciale)\n\n";
+            listText += "💎 ATTICO LUXURY:\n";
+            listText += "• 302, 304, 306, 308, 310, 312, 314\n";
+            listText += "• Badge dorato richiesto\n\n";
+            listText += "📍 GPS ATTIVO: Il sistema rileva automaticamente\n";
+            listText += "la tua zona e ti guida passo dopo passo!\n\n";
+            listText += "🌐 Powered by GitHub Pages";
             alert(listText);
         }
-
-
 
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
@@ -1024,21 +1144,19 @@ Per assistenza: +39 123 456 789`);
             document.getElementById('errorMessage').style.display = 'none';
         }
 
-        // Non attivare GPS automaticamente - deve essere richiesto dall'utente
-
-        // Cleanup GPS quando si chiude la pagina
+        // Cleanup
         window.addEventListener('beforeunload', () => {
             if (gpsWatchId) {
                 navigator.geolocation.clearWatch(gpsWatchId);
             }
         });
 
-        // Gestione input con Enter
+        // Enter key support
         document.getElementById('apartmentNumber').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 startNavigation();
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b98b72232dedb3',t:'MTc1NzI4MzExNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b99562d5c0edb3',t:'MTc1NzI4MzUyMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
