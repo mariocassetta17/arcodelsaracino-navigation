@@ -1117,13 +1117,18 @@ apartments["314"] = [
           }
 
           // Controllo area ristorante
+          // Controllo area ristorante
           if (isPointInPolygon({lat, lng}, restaurantArea.coordinates)) {
-            const msg = getRestaurantMsg(apt);
-            if (msg) {
-              document.getElementById("output").innerText = msg;
-              speak(msg);
+            if (!restaurantMsgSpoken) {
+              const msg = getRestaurantMsg(apt);
+              if (msg) {
+                document.getElementById("output").innerText = msg;
+                speak(msg);
+                restaurantMsgSpoken = true; // Impedisce di ripetere il messaggio
+              }
             }
           }
+
 
           // Controllo checkpoint appartamento
           if (currentStep < checkpoints.length) {
