@@ -696,17 +696,12 @@
             const gpsStatusText = document.getElementById('gpsStatusText');
             const startBtn = document.getElementById('startBtn');
             
-            startBtn.disabled = true;
-            startBtn.textContent = '⏳ Attivazione GPS...';
-            
             gpsStatus.style.display = 'block';
             gpsStatus.className = 'gps-status requesting';
             gpsStatusText.textContent = '🔐 Richiesta permessi GPS in corso...';
 
             if (!navigator.geolocation) {
                 showGPSError('❌ GPS non supportato da questo dispositivo');
-                startBtn.disabled = false;
-                startBtn.textContent = '🧭 GPS Non Disponibile';
                 return;
             }
 
@@ -724,9 +719,6 @@
                     gpsStatus.className = 'gps-status';
                     gpsStatusText.textContent = '✅ GPS attivato con successo!';
                     
-                    startBtn.disabled = false;
-                    startBtn.textContent = '🧭 Inizia Navigazione';
-                    
                     showLocationInfo();
                     startGPSTracking();
                     
@@ -738,12 +730,10 @@
                 },
                 (error) => {
                     let errorMsg = '';
-                    let buttonText = '📍 Riprova GPS';
                     
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
                             errorMsg = '🚫 Permessi GPS negati. Su GitHub Pages hai pieno controllo - abilita la geolocalizzazione!';
-                            buttonText = '🔄 Richiedi Permessi';
                             break;
                         case error.POSITION_UNAVAILABLE:
                             errorMsg = '📡 Posizione non disponibile. Verifica la connessione GPS.';
@@ -756,8 +746,6 @@
                     }
                     
                     showGPSError(errorMsg);
-                    startBtn.disabled = false;
-                    startBtn.textContent = buttonText;
                 },
                 {
                     enableHighAccuracy: true,
@@ -1213,6 +1201,14 @@ La navigazione è BLOCCATA se non sei nell'Area Esterna Reception!
             document.getElementById('errorMessage').style.display = 'none';
         }
 
+        // Attivazione GPS automatica al caricamento della pagina
+        window.addEventListener('load', () => {
+            // Attiva automaticamente il GPS quando la pagina si carica
+            setTimeout(() => {
+                requestGPS();
+            }, 1000);
+        });
+
         // Cleanup
         window.addEventListener('beforeunload', () => {
             if (gpsWatchId) {
@@ -1227,5 +1223,5 @@ La navigazione è BLOCCATA se non sei nell'Area Esterna Reception!
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9b04c62ebee85',t:'MTc1NzI4NDYyNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9b4eaa043ee85',t:'MTc1NzI4NDgxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
