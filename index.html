@@ -985,25 +985,22 @@
         function checkZoneEntry() {
             const currentZone = detectCurrentZone();
             
-            // Durante la navigazione, controlla SEMPRE i cambi di zona AD OGNI AGGIORNAMENTO GPS
-            if (currentRoute) {
-                // Log per debug
-                console.log('🔄 Controllo zone - Zona attuale:', currentZone ? currentZone.name : 'Nessuna');
-                console.log('🔄 Step corrente:', currentStep);
+            // Durante la navigazione, controlla i cambi di zona SOLO quando necessario
+            if (currentRoute && currentZone) {
+                console.log('📍 Zona GPS rilevata:', currentZone.name);
+                console.log('📍 Step navigazione corrente:', currentStep);
                 
-                // CONTROLLO AGGRESSIVO: Se sei nell'area ristorante, forza il cambio IMMEDIATAMENTE
-                if (currentZone && currentZone.name === "Fronte Ristorante" && currentStep !== 1) {
-                    console.log('🚨 RILEVATO RISTORANTE - FORZANDO CAMBIO IMMEDIATO!');
+                // SOLO se sei nell'area ristorante E non sei già al step ristorante
+                if (currentZone.name === "Fronte Ristorante" && currentStep !== 1) {
+                    console.log('🍽️ ENTRATO nell\'area ristorante - Cambio al step ristorante');
                     forceRestaurantStep();
                 }
-                
-                checkZoneBasedNavigation();
             }
             
             // Aggiorna la zona solo se è diversa
             if (currentZone && currentZone !== lastTriggeredZone) {
                 lastTriggeredZone = currentZone;
-                console.log('📍 Nuova zona rilevata:', currentZone.name);
+                console.log('📍 NUOVA ZONA RILEVATA:', currentZone.name);
             }
         }
 
@@ -1136,92 +1133,62 @@ Devi essere SOLO nell'Area Esterna Reception per iniziare la navigazione.
 
         // Funzione per forzare il cambio al step ristorante
         function forceRestaurantStep() {
-            if (!currentRoute || currentRoute.steps.length <= 1) return;
+            if (!currentRoute || currentRoute.steps.length <= 1) {
+                console.log('❌ Impossibile forzare step ristorante - route non valida');
+                return;
+            }
             
             const restaurantStep = currentRoute.steps[1]; // Step 1 = istruzione ristorante
+            
+            console.log('🚨 INIZIO FORZATURA STEP RISTORANTE');
+            console.log('   - Step precedente:', currentStep);
+            console.log('   - Nuovo step:', 1);
+            console.log('   - Testo istruzione:', restaurantStep.text);
             
             // Forza il cambio al step del ristorante
             currentStep = 1;
             
-            console.log('🍽️ FORZANDO step ristorante:', restaurantStep.text);
-            
             // Aggiorna IMMEDIATAMENTE il grande rettangolo blu principale
             const currentInstruction = document.getElementById('currentInstruction');
-            currentInstruction.innerHTML = `
-                <div class="instruction-icon">🍽️</div>
-                <div class="instruction-text">${restaurantStep.text}</div>
-                <div class="instruction-distance">${restaurantStep.distance}</div>
-            `;
+            if (currentInstruction) {
+                currentInstruction.innerHTML = `
+                    <div class="instruction-icon">🍽️</div>
+                    <div class="instruction-text">${restaurantStep.text}</div>
+                    <div class="instruction-distance">${restaurantStep.distance}</div>
+                `;
+                console.log('✅ Rettangolo blu aggiornato con successo');
+            } else {
+                console.log('❌ Elemento currentInstruction non trovato!');
+            }
             
             // Aggiorna la barra di progresso al 50%
-            document.getElementById('progressFill').style.width = '50%';
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) {
+                progressFill.style.width = '50%';
+                console.log('✅ Barra progresso aggiornata al 50%');
+            }
             
             // Aggiorna i prossimi passi
             updateNextSteps();
+            console.log('✅ Prossimi passi aggiornati');
             
             // Audio se abilitato
             if (voiceEnabled) {
                 speakInstruction(restaurantStep.text);
+                console.log('🔊 Audio riprodotto');
             }
             
             // Mostra alert di conferma IMMEDIATO
             showZoneNavigationAlert(restaurantStep);
+            console.log('📢 Alert zona mostrato');
             
-            console.log('✅ STEP RISTORANTE FORZATO CON SUCCESSO!');
+            console.log('🎉 STEP RISTORANTE FORZATO CON SUCCESSO COMPLETO!');
         }
 
-        // Sistema di navigazione basato su zone GPS
+        // Sistema di navigazione basato su zone GPS (semplificato)
         function checkZoneBasedNavigation() {
-            if (!currentRoute || !userLocation) return;
-            
-            const currentZone = detectCurrentZone();
-            
-            // Debug: log della zona rilevata
-            console.log('🎯 Zona attuale:', currentZone ? currentZone.name : 'Nessuna zona');
-            
-            // APPENA ESCI DALLA RECEPTION: vai al primo step di movimento
-            if (currentZone && currentZone.name !== "Area Esterna Reception" && currentStep === 0) {
-                console.log('🚶‍♂️ Uscito dalla Reception - Attivando primo step');
-                currentStep = 0; // Mantieni il primo step (uscita reception)
-                updateNavigation();
-            }
-            
-            // APPENA ENTRI NEL RISTORANTE: cambia immediatamente al step ristorante
-            if (currentZone && currentZone.name === "Fronte Ristorante") {
-                console.log('🍽️ ENTRATO nell\'area ristorante - Cambio immediato!');
-                
-                // Trova il passo del ristorante (step 1 nell'array)
-                if (currentRoute.steps.length > 1) {
-                    const restaurantStep = currentRoute.steps[1]; // Step 1 = istruzione ristorante
-                    
-                    // Forza il cambio al step del ristorante
-                    currentStep = 1;
-                    
-                    // Aggiorna IMMEDIATAMENTE il grande rettangolo blu principale
-                    const currentInstruction = document.getElementById('currentInstruction');
-                    currentInstruction.innerHTML = `
-                        <div class="instruction-icon">🍽️</div>
-                        <div class="instruction-text">${restaurantStep.text}</div>
-                        <div class="instruction-distance">${restaurantStep.distance}</div>
-                    `;
-                    
-                    // Aggiorna la barra di progresso al 50%
-                    document.getElementById('progressFill').style.width = '50%';
-                    
-                    // Aggiorna i prossimi passi
-                    updateNextSteps();
-                    
-                    // Audio se abilitato
-                    if (voiceEnabled) {
-                        speakInstruction(restaurantStep.text);
-                    }
-                    
-                    // Mostra alert di conferma IMMEDIATO
-                    showZoneNavigationAlert(restaurantStep);
-                    
-                    console.log('✅ CAMBIO IMMEDIATO - Istruzione ristorante attiva!');
-                }
-            }
+            // Questa funzione è ora gestita da checkZoneEntry() per evitare duplicazioni
+            // Manteniamo solo per compatibilità
         }
         
         function getZoneKey(zone) {
@@ -1266,41 +1233,15 @@ Devi essere SOLO nell'Area Esterna Reception per iniziare la navigazione.
         }
 
         function startNavigationSimulation() {
-            // La navigazione ora è completamente basata su GPS e zone
-            // Non c'è più progressione automatica temporizzata
-            // Le istruzioni cambiano IMMEDIATAMENTE quando l'utente entra fisicamente nelle zone GPS
-            
-            // Controlla immediatamente se siamo già in una zona specifica
-            checkZoneBasedNavigation();
+            // La navigazione è completamente basata su GPS reale
+            // Le istruzioni cambiano SOLO quando l'utente entra fisicamente nelle zone GPS
             
             console.log('🧭 Navigazione GPS attiva - Il sistema rileverà automaticamente quando entri nelle zone');
+            console.log('📍 Posizione iniziale:', userLocation);
+            console.log('🎯 Aspettando movimento fisico verso il ristorante...');
             
-            // TEST AUTOMATICO: Simula l'ingresso nell'area ristorante dopo 3 secondi
-            setTimeout(() => {
-                console.log('🧪 TEST: Simulando ingresso nell\'area ristorante...');
-                
-                // Salva la posizione originale
-                const originalLocation = userLocation;
-                
-                // Simula di essere nell'area ristorante (coordinate dentro il poligono)
-                userLocation = { 
-                    lat: 39.851125, 
-                    lng: 18.193150,
-                    accuracy: 5,
-                    speed: 0
-                };
-                
-                // Forza il controllo delle zone
-                console.log('🧪 Forzando controllo zone con posizione simulata...');
-                checkZoneEntry();
-                
-                // Ripristina la posizione originale dopo 2 secondi
-                setTimeout(() => {
-                    userLocation = originalLocation;
-                    console.log('🧪 Test completato - posizione ripristinata');
-                }, 2000);
-                
-            }, 3000);
+            // NESSUN TEST AUTOMATICO - Solo GPS reale
+            // Il sistema cambierà istruzioni SOLO quando il GPS rileva fisicamente l'area ristorante
         }
 
         function showArrivalMessage() {
@@ -1437,5 +1378,5 @@ La navigazione è BLOCCATA se non sei SOLO nell'Area Esterna Reception!
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ba00e227afedb3',t:'MTc1NzI4NzkyNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ba07d5858bee85',t:'MTc1NzI4ODIxMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
