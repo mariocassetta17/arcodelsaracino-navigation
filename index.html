@@ -464,6 +464,9 @@
                 <div class="qr-icon">📱</div>
                 <h3>Villa Resort Navigator</h3>
                 <p>Sistema di navigazione GPS professionale</p>
+                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
+                    <strong>⚠️ Importante:</strong> Recati all'Area Reception per iniziare la navigazione
+                </div>
             </div>
 
             <div class="gps-status" id="gpsStatus">
@@ -492,20 +495,8 @@
                 <input type="number" id="apartmentNumber" placeholder="es. 150" min="101" max="314">
             </div>
 
-            <button class="btn btn-gps" onclick="requestGPS()" id="gpsBtn">
-                📍 Attiva GPS e Inizia
-            </button>
-
-            <button class="btn" onclick="startNavigation()" id="startBtn" disabled>
+            <button class="btn" onclick="startNavigation()" id="startBtn">
                 🧭 Inizia Navigazione
-            </button>
-
-            <button class="btn btn-secondary" onclick="showApartmentList()">
-                📋 Visualizza Lista Appartamenti
-            </button>
-
-            <button class="btn btn-github" onclick="showGitHubInfo()">
-                💻 Info GitHub Pages
             </button>
         </div>
 
@@ -684,14 +675,14 @@
         let gpsEnabled = false;
         let lastTriggeredZone = null;
 
-        // Richiesta GPS ottimizzata per GitHub Pages
+        // Richiesta GPS automatica
         function requestGPS() {
             const gpsStatus = document.getElementById('gpsStatus');
             const gpsStatusText = document.getElementById('gpsStatusText');
-            const gpsBtn = document.getElementById('gpsBtn');
+            const startBtn = document.getElementById('startBtn');
             
-            gpsBtn.disabled = true;
-            gpsBtn.textContent = '⏳ Attivazione GPS...';
+            startBtn.disabled = true;
+            startBtn.textContent = '⏳ Attivazione GPS...';
             
             gpsStatus.style.display = 'block';
             gpsStatus.className = 'gps-status requesting';
@@ -699,8 +690,8 @@
 
             if (!navigator.geolocation) {
                 showGPSError('❌ GPS non supportato da questo dispositivo');
-                gpsBtn.disabled = false;
-                gpsBtn.textContent = '📍 GPS Non Disponibile';
+                startBtn.disabled = false;
+                startBtn.textContent = '🧭 GPS Non Disponibile';
                 return;
             }
 
@@ -718,11 +709,17 @@
                     gpsStatus.className = 'gps-status';
                     gpsStatusText.textContent = '✅ GPS attivato con successo!';
                     
-                    document.getElementById('startBtn').disabled = false;
-                    gpsBtn.style.display = 'none';
+                    startBtn.disabled = false;
+                    startBtn.textContent = '🧭 Inizia Navigazione';
                     
                     showLocationInfo();
                     startGPSTracking();
+                    
+                    // Riprova automaticamente la navigazione se era stata richiesta
+                    const apartmentNumber = document.getElementById('apartmentNumber').value;
+                    if (apartmentNumber) {
+                        setTimeout(() => startNavigation(), 1000);
+                    }
                 },
                 (error) => {
                     let errorMsg = '';
@@ -744,8 +741,8 @@
                     }
                     
                     showGPSError(errorMsg);
-                    gpsBtn.disabled = false;
-                    gpsBtn.textContent = buttonText;
+                    startBtn.disabled = false;
+                    startBtn.textContent = buttonText;
                 },
                 {
                     enableHighAccuracy: true,
@@ -911,8 +908,16 @@
                 return;
             }
 
+            // Attiva automaticamente il GPS se non è già attivo
             if (!gpsEnabled) {
-                showError("Attiva prima il GPS per utilizzare la navigazione");
+                requestGPS();
+                return;
+            }
+
+            // Controlla se sei nell'area reception
+            const currentZone = detectCurrentZone();
+            if (!currentZone || currentZone.name !== "Area Reception") {
+                showError("🚫 Devi essere nell'Area Reception per iniziare la navigazione. Recati alla reception e riprova.");
                 return;
             }
 
@@ -1060,78 +1065,26 @@
             }, 1000);
         }
 
-        function showGitHubInfo() {
-            alert(`🚀 VILLA RESORT GPS - GITHUB PAGES
-
-✅ VANTAGGI GITHUB PAGES:
-• Pieno accesso alle API GPS del browser
-• HTTPS nativo per sicurezza
-• Hosting gratuito e affidabile
-• Aggiornamenti automatici dal repository
-• PWA (Progressive Web App) supportata
-
-🔧 FUNZIONALITÀ COMPLETE:
-• GPS in tempo reale con alta precisione
-• Tracking continuo della posizione
-• Rilevamento automatico delle zone
-• Notifiche push (se installata come PWA)
-• Condivisione posizione
-• Audio istruzioni vocali
-
-📱 INSTALLAZIONE:
-• Clicca "Installa App" per aggiungerla alla home
-• Funziona offline una volta installata
-• Esperienza nativa su mobile
-
-🌐 Repository: github.com/tuonome/villa-resort-gps
-📧 Supporto: info@villaresort.com`);
-        }
-
         function showHelp() {
             alert(`🏖️ VILLA RESORT GPS NAVIGATOR
 
 🎯 COME USARE:
-1. Clicca "Attiva GPS" (il browser chiederà i permessi)
+1. Recati all'Area Reception del resort
 2. Inserisci il numero appartamento (101-314)
-3. Inizia la navigazione GPS in tempo reale
-4. Ricevi notifiche automatiche per ogni zona
+3. Clicca "Inizia Navigazione" (GPS si attiva automaticamente)
+4. Segui le istruzioni GPS in tempo reale
 
-📍 FUNZIONALITÀ GPS:
-• Posizione in tempo reale con precisione
-• Velocità di movimento
-• Rilevamento automatico zone resort
-• Istruzioni vocali (attivabili)
+⚠️ IMPORTANTE:
+• La navigazione inizia SOLO dall'Area Reception
+• Il GPS si attiva automaticamente quando necessario
+• Riceverai notifiche per ogni zona del resort
 
 🏢 APPARTAMENTI DISPONIBILI:
 • 101-257 (tutti i numeri)
 • 258, 260 (Torre Esclusiva - VIP)
 • 302-314 (solo pari - Attico Luxury)
 
-🎯 ZONE MONITORATE:
-• Area Reception (punto partenza)
-• Area Piscina
-• Giardino
-• Zona Mare
-
-📱 PWA: Installa l'app per esperienza nativa!
 📞 Assistenza: +39 123 456 789`);
-        }
-
-        function showApartmentList() {
-            let listText = "🏖️ APPARTAMENTI VILLA RESORT\n\n";
-            listText += "🚀 SISTEMA GPS GITHUB PAGES\n";
-            listText += "Tracking in tempo reale con alta precisione\n\n";
-            listText += "🏢 APPARTAMENTI STANDARD:\n";
-            listText += "• 101-257 (tutti i numeri disponibili)\n\n";
-            listText += "🏰 TORRE ESCLUSIVA (VIP):\n";
-            listText += "• 258, 260 (accesso con badge speciale)\n\n";
-            listText += "💎 ATTICO LUXURY:\n";
-            listText += "• 302, 304, 306, 308, 310, 312, 314\n";
-            listText += "• Badge dorato richiesto\n\n";
-            listText += "📍 GPS ATTIVO: Il sistema rileva automaticamente\n";
-            listText += "la tua zona e ti guida passo dopo passo!\n\n";
-            listText += "🌐 Powered by GitHub Pages";
-            alert(listText);
         }
 
         function showError(message) {
@@ -1158,5 +1111,5 @@
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b99562d5c0edb3',t:'MTc1NzI4MzUyMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b99afb2175ee85',t:'MTc1NzI4Mzc1Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
