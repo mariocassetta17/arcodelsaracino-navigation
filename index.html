@@ -464,8 +464,15 @@
                 <div class="qr-icon">📱</div>
                 <h3>Villa Resort Navigator</h3>
                 <p>Sistema di navigazione GPS professionale</p>
-                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
-                    <strong>⚠️ Importante:</strong> Recati all'Area Reception per iniziare la navigazione
+                <div style="margin-top: 15px; padding: 15px; background: #dc3545; color: white; border-radius: 8px; border: 2px solid #c82333; text-align: center;">
+                    <div style="font-size: 1.2em; margin-bottom: 8px;">🚫 ACCESSO LIMITATO</div>
+                    <strong>La navigazione inizia SOLO dall'Area Esterna Reception!</strong>
+                    <div style="font-size: 0.9em; margin-top: 8px; opacity: 0.9;">
+                        Devi essere fisicamente presente nell'area poligonale esterna della reception
+                    </div>
+                    <div style="font-size: 0.8em; margin-top: 5px; opacity: 0.8;">
+                        Coordinate: 39°51'04.0"N 18°11'36.2"E
+                    </div>
                 </div>
             </div>
 
@@ -592,14 +599,20 @@
         // Database degli appartamenti con percorsi dettagliati
         const apartmentRoutes = {};
 
+        // Area poligonale esatta della Reception (coordinate precise)
+        const receptionPolygon = [
+            { lat: 39.851111, lng: 18.193389 }, // 39°51'04.0"N 18°11'36.2"E
+            { lat: 39.851111, lng: 18.1935 },   // 39°51'04.0"N 18°11'36.6"E
+            { lat: 39.851028, lng: 18.1935 },   // 39°51'03.7"N 18°11'36.6"E
+            { lat: 39.851028, lng: 18.193417 }  // 39°51'03.7"N 18°11'36.3"E
+        ];
+
         // Zone GPS del resort configurate (coordinate reali)
         const resortZones = {
             reception: {
-                name: "Area Reception",
-                lat: 39.851111,
-                lng: 18.193500,
-                radius: 25,
-                message: "📋 Benvenuto! Sei nell'area reception. Il tuo percorso inizia da qui."
+                name: "Area Esterna Reception",
+                polygon: receptionPolygon,
+                message: "📋 Perfetto! Sei nell'area esterna della reception. La navigazione può iniziare da qui."
             },
             pool: {
                 name: "Area Piscina",
@@ -844,17 +857,39 @@
         function detectCurrentZone() {
             if (!userLocation) return null;
 
+            // Controllo speciale per l'area reception (poligonale)
+            if (isPointInPolygon(userLocation, receptionPolygon)) {
+                return resortZones.reception;
+            }
+
+            // Controllo per le altre zone (circolari)
             for (const [key, zone] of Object.entries(resortZones)) {
-                const distance = calculateDistance(
-                    userLocation.lat, userLocation.lng,
-                    zone.lat, zone.lng
-                );
+                if (key === 'reception') continue; // Già controllata sopra
                 
-                if (distance <= zone.radius) {
-                    return zone;
+                if (zone.lat && zone.lng && zone.radius) {
+                    const distance = calculateDistance(
+                        userLocation.lat, userLocation.lng,
+                        zone.lat, zone.lng
+                    );
+                    
+                    if (distance <= zone.radius) {
+                        return zone;
+                    }
                 }
             }
             return null;
+        }
+
+        // Funzione per verificare se un punto è dentro un poligono
+        function isPointInPolygon(point, polygon) {
+            let inside = false;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                if (((polygon[i].lng > point.lng) !== (polygon[j].lng > point.lng)) &&
+                    (point.lat < (polygon[j].lat - polygon[i].lat) * (point.lng - polygon[i].lng) / (polygon[j].lng - polygon[i].lng) + polygon[i].lat)) {
+                    inside = !inside;
+                }
+            }
+            return inside;
         }
 
         function calculateDistance(lat1, lng1, lat2, lng2) {
@@ -914,10 +949,20 @@
                 return;
             }
 
-            // Controlla se sei nell'area reception
+            // CONTROLLO RIGOROSO: Devi essere ESATTAMENTE nell'Area Reception
             const currentZone = detectCurrentZone();
-            if (!currentZone || currentZone.name !== "Area Reception") {
-                showError("🚫 Devi essere nell'Area Reception per iniziare la navigazione. Recati alla reception e riprova.");
+            const isInReception = isUserInReceptionArea();
+            
+            if (!isInReception) {
+                showError(`🚫 ACCESSO NEGATO! 
+                
+Devi essere ESATTAMENTE nell'Area Esterna Reception per iniziare la navigazione.
+                
+📍 Posizione attuale: ${currentZone ? currentZone.name : 'Zona sconosciuta'}
+📐 Area richiesta: Poligono Reception Esterna
+⚠️ Coordinate precise richieste: 39°51'04.0"N 18°11'36.2"E
+
+🚶‍♂️ Recati nell'area esterna della Reception e riprova!`);
                 return;
             }
 
@@ -926,17 +971,47 @@
                 return;
             }
 
+            // Navigazione autorizzata - sei nell'area esterna della Reception!
+            showSuccess("✅ NAVIGAZIONE AUTORIZZATA! Sei nell'Area Esterna Reception.");
+            
             currentRoute = apartmentRoutes[apartmentNumber];
             currentStep = 0;
             
-            document.getElementById('welcomeScreen').style.display = 'none';
-            document.getElementById('navigationScreen').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('welcomeScreen').style.display = 'none';
+                document.getElementById('navigationScreen').style.display = 'flex';
+                
+                document.getElementById('destinationTitle').textContent = currentRoute.name;
+                document.getElementById('etaInfo').textContent = `Arrivo stimato: ${currentRoute.estimatedTime}`;
+                
+                updateNavigation();
+                startNavigationSimulation();
+            }, 1500);
+        }
+
+        // Funzione per controllo rigoroso Area Reception (poligonale)
+        function isUserInReceptionArea() {
+            if (!userLocation) return false;
             
-            document.getElementById('destinationTitle').textContent = currentRoute.name;
-            document.getElementById('etaInfo').textContent = `Arrivo stimato: ${currentRoute.estimatedTime}`;
+            // Controllo se l'utente è dentro il poligono esatto della reception
+            return isPointInPolygon(userLocation, receptionPolygon);
+        }
+
+        // Funzione per mostrare messaggi di successo
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            errorDiv.style.background = '#d4edda';
+            errorDiv.style.color = '#155724';
+            errorDiv.style.border = '2px solid #c3e6cb';
             
-            updateNavigation();
-            startNavigationSimulation();
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+                errorDiv.style.background = '#fed7d7';
+                errorDiv.style.color = '#c53030';
+                errorDiv.style.border = 'none';
+            }, 3000);
         }
 
         function updateNavigation() {
@@ -1068,21 +1143,29 @@
         function showHelp() {
             alert(`🏖️ VILLA RESORT GPS NAVIGATOR
 
-🎯 COME USARE:
-1. Recati all'Area Reception del resort
-2. Inserisci il numero appartamento (101-314)
-3. Clicca "Inizia Navigazione" (GPS si attiva automaticamente)
-4. Segui le istruzioni GPS in tempo reale
+🚫 CONTROLLO ACCESSO RIGOROSO:
+La navigazione è BLOCCATA se non sei nell'Area Esterna Reception!
 
-⚠️ IMPORTANTE:
-• La navigazione inizia SOLO dall'Area Reception
-• Il GPS si attiva automaticamente quando necessario
-• Riceverai notifiche per ogni zona del resort
+🎯 PROCEDURA OBBLIGATORIA:
+1. Vai FISICAMENTE nell'Area Esterna Reception del resort
+2. Attendi che il GPS rilevi la tua posizione
+3. Verifica che mostri "Zona: Area Esterna Reception"
+4. Solo allora inserisci il numero appartamento
+5. Clicca "Inizia Navigazione"
+
+⚠️ SISTEMA DI SICUREZZA POLIGONALE:
+• Area precisa: Poligono definito da 4 coordinate GPS
+• Coordinate: 39°51'04.0"N 18°11'36.2"E (e altre 3)
+• Controllo GPS in tempo reale
+• Accesso negato se fuori dal poligono esatto
+• Rilevamento automatico della posizione
 
 🏢 APPARTAMENTI DISPONIBILI:
 • 101-257 (tutti i numeri)
 • 258, 260 (Torre Esclusiva - VIP)
 • 302-314 (solo pari - Attico Luxury)
+
+📍 Se il sistema ti blocca, significa che NON sei dentro il poligono esatto dell'Area Esterna Reception!
 
 📞 Assistenza: +39 123 456 789`);
         }
@@ -1111,5 +1194,5 @@
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b99afb2175ee85',t:'MTc1NzI4Mzc1Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9a8233118ee85',t:'MTc1NzI4NDI5MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
