@@ -20,7 +20,6 @@
     let receptionMsgSpoken = false;
     const apartments = {};
 
-
     // --------------------------------------------------
     // APPARTAMENTI PROVVISORI
     // --------------------------------------------------
@@ -1095,10 +1094,82 @@ apartments["314"] = [
 
     function startRoute() {
       const apt = document.getElementById("aptNumber").value.trim();
+      console.log("StartRoute chiamato, appartamento:", apt);
+    
       if (!apartments[apt]) {
         document.getElementById("output").innerText = "Appartamento non trovato!";
+        console.log("Appartamento non trovato!");
         return;
       }
+    
+      checkpoints = apartments[apt];
+      currentStep = 0;
+    
+      // Reset variabili di stato per le aree
+      restaurantMsgSpoken = false;
+      receptionMsgSpoken = false;
+    
+      document.getElementById("inputDiv").style.display = "none";
+      document.getElementById("output").innerText = "Attiva GPS e segui le istruzioni...";
+      console.log("Checkpoints:", checkpoints);
+    
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          console.log("Posizione aggiornata:", lat, lng);
+    
+          // Area reception
+          if (isPointInPolygon({lat, lng}, receptionArea.coordinates)) {
+            if (!receptionMsgSpoken) {
+              const msg = getReceptionMsg(apt);
+              if (msg) {
+                document.getElementById("output").innerText = msg;
+                speak(msg);
+                receptionMsgSpoken = true;
+                console.log("Reception message:", msg);
+              }
+            }
+          }
+    
+          // Area ristorante
+          if (isPointInPolygon({lat, lng}, restaurantArea.coordinates)) {
+            if (!restaurantMsgSpoken) {
+              const msg = getRestaurantMsg(apt);
+              if (msg) {
+                document.getElementById("output").innerText = msg;
+                speak(msg);
+                restaurantMsgSpoken = true;
+                console.log("Restaurant message:", msg);
+              }
+            }
+          }
+    
+          // Checkpoint appartamento
+          if (currentStep < checkpoints.length) {
+            const cp = checkpoints[currentStep];
+            const dist = distance(lat, lng, cp.lat, cp.lng);
+            if (dist < RADIUS) {
+              document.getElementById("output").innerText = cp.msg;
+              speak(cp.msg);
+              currentStep++;
+              console.log("Checkpoint raggiunto:", cp.msg);
+            }
+          } else if (currentStep >= checkpoints.length) {
+            document.getElementById("output").innerText = "Sei arrivato a destinazione!";
+            speak("Sei arrivato a destinazione!");
+            console.log("Destinazione raggiunta");
+          }
+    
+        }, err => {
+          document.getElementById("output").innerText = "Errore GPS: " + err.message;
+          console.log("Errore GPS:", err.message);
+        }, {enableHighAccuracy: true});
+      } else {
+        document.getElementById("output").innerText = "GPS non supportato.";
+        console.log("GPS non supportato");
+      }
+    }
 
       checkpoints = apartments[apt];
       currentStep = 0;
