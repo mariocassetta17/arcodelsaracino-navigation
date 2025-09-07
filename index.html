@@ -1108,11 +1108,15 @@ apartments["314"] = [
           const lng = pos.coords.longitude;
 
           // Controllo area reception
+         // Controllo area reception
           if (isPointInPolygon({lat, lng}, receptionArea.coordinates)) {
-            const msg = getReceptionMsg(apt);
-            if (msg) {
-              document.getElementById("output").innerText = msg;
-              speak(msg);
+            if (!receptionMsgSpoken) {
+              const msg = getReceptionMsg(apt);
+              if (msg) {
+                document.getElementById("output").innerText = msg;
+                speak(msg);
+                receptionMsgSpoken = true; // messaggio pronunciato una sola volta
+              }
             }
           }
 
