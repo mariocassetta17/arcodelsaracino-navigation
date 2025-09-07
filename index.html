@@ -655,17 +655,60 @@
 
         // Genera percorsi appartamenti
         function generateApartmentRoutes() {
+            // Appartamenti 101-234 (tranne 233) e 306-314
             for (let i = 101; i <= 257; i++) {
-                apartmentRoutes[i] = {
-                    name: `Appartamento ${i}`,
-                    estimatedTime: "3-5 min",
-                    steps: [
+                let steps = [];
+                
+                if ((i >= 101 && i <= 234 && i !== 233) || (i >= 306 && i <= 314)) {
+                    // Appartamenti con percorso specifico
+                    steps = [
+                        { 
+                            icon: "🚶‍♂️", 
+                            text: "Uscendo dalla reception svolta a destra e prosegui dritto", 
+                            distance: "Dall'area reception",
+                            zone: "reception"
+                        },
+                        { 
+                            icon: "🍽️", 
+                            text: getRestaurantInstruction(i), 
+                            distance: "Area ristorante",
+                            zone: "restaurant"
+                        },
+                        { 
+                            icon: "📍", 
+                            text: "Continua seguendo le indicazioni GPS", 
+                            distance: "GPS attivo" 
+                        },
+                        { 
+                            icon: "🏠", 
+                            text: `Arrivo all'appartamento ${i}`, 
+                            distance: "Destinazione" 
+                        }
+                    ];
+                } else {
+                    // Altri appartamenti con istruzioni generiche
+                    steps = [
                         { icon: "🚶‍♂️", text: "Segui le indicazioni GPS in tempo reale", distance: "GPS attivo" },
                         { icon: "📍", text: "Il sistema ti guiderà automaticamente", distance: "Tracking attivo" },
                         { icon: "🎯", text: "Riceverai notifiche per ogni zona", distance: "Automatico" },
                         { icon: "🏠", text: `Arrivo all'appartamento ${i}`, distance: "Destinazione" }
-                    ]
+                    ];
+                }
+                
+                apartmentRoutes[i] = {
+                    name: `Appartamento ${i}`,
+                    estimatedTime: "3-5 min",
+                    steps: steps
                 };
+            }
+            
+            // Funzione per determinare l'istruzione al ristorante
+            function getRestaurantInstruction(apartmentNumber) {
+                if (apartmentNumber === 101 || apartmentNumber === 102 || apartmentNumber === 231) {
+                    return "Svolta a destra nel viale adiacente al ristorante";
+                } else {
+                    return "Svolta leggermente a destra e prosegui dritto";
+                }
             }
 
             for (let i = 258; i <= 260; i += 2) {
@@ -950,7 +993,10 @@
                 lastTriggeredZone = currentZone;
                 showZoneAlert(currentZone);
                 
-                if (voiceEnabled) {
+                // Se siamo in navigazione, controlla le istruzioni specifiche per zona
+                if (currentRoute) {
+                    checkZoneBasedNavigation();
+                } else if (voiceEnabled) {
                     speakInstruction(currentZone.message);
                 }
             }
@@ -1084,6 +1130,50 @@ Devi essere in una delle AREE AUTORIZZATE per iniziare la navigazione.
             }
         }
 
+        // Sistema di navigazione basato su zone GPS
+        function checkZoneBasedNavigation() {
+            if (!currentRoute || !userLocation) return;
+            
+            const currentZone = detectCurrentZone();
+            if (!currentZone) return;
+            
+            // Trova il passo corrispondente alla zona attuale
+            const zoneStep = currentRoute.steps.find(step => step.zone === getZoneKey(currentZone));
+            
+            if (zoneStep && currentRoute.steps[currentStep] !== zoneStep) {
+                // Aggiorna automaticamente al passo corretto per la zona
+                const stepIndex = currentRoute.steps.indexOf(zoneStep);
+                if (stepIndex !== -1 && stepIndex !== currentStep) {
+                    currentStep = stepIndex;
+                    updateNavigation();
+                    
+                    // Mostra notifica di cambio zona
+                    showZoneNavigationAlert(zoneStep);
+                }
+            }
+        }
+        
+        function getZoneKey(zone) {
+            if (zone === resortZones.reception) return 'reception';
+            if (zone === resortZones.restaurant) return 'restaurant';
+            return null;
+        }
+        
+        function showZoneNavigationAlert(step) {
+            const navZoneAlert = document.getElementById('navZoneAlert');
+            const navZoneAlertText = document.getElementById('navZoneAlertText');
+            
+            if (navZoneAlert && navZoneAlertText) {
+                navZoneAlertText.textContent = `🧭 ${step.text}`;
+                navZoneAlert.style.display = 'block';
+                setTimeout(() => navZoneAlert.style.display = 'none', 8000);
+                
+                if (voiceEnabled) {
+                    speakInstruction(step.text);
+                }
+            }
+        }
+
         function updateNextSteps() {
             const nextStepsContainer = document.getElementById('nextSteps');
             nextStepsContainer.innerHTML = '';
@@ -1105,15 +1195,12 @@ Devi essere in una delle AREE AUTORIZZATE per iniziare la navigazione.
         }
 
         function startNavigationSimulation() {
-            navigationInterval = setInterval(() => {
-                if (currentStep < currentRoute.steps.length - 1) {
-                    currentStep++;
-                    updateNavigation();
-                } else {
-                    clearInterval(navigationInterval);
-                    showArrivalMessage();
-                }
-            }, 8000);
+            // La navigazione ora è completamente basata su GPS e zone
+            // Non c'è più progressione automatica temporizzata
+            // Le istruzioni cambiano solo quando l'utente entra fisicamente nelle zone GPS
+            
+            // Controlla immediatamente se siamo già in una zona specifica
+            checkZoneBasedNavigation();
         }
 
         function showArrivalMessage() {
@@ -1252,5 +1339,5 @@ La navigazione è BLOCCATA se non sei in un'area autorizzata!
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9c56a7266c4e2',t:'MTc1NzI4NTQ5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b9ca6da08ac4e2',t:'MTc1NzI4NTY5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
