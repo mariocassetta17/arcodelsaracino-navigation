@@ -17,6 +17,10 @@
     const RADIUS = 20;
     let currentStep = 0;
     const apartments = {};
+
+    // --------------------------------------------------
+    // APPARTAMENTI PROVVISORI 101-257
+    // --------------------------------------------------
 apartments["101"] = [
   {lat: 41.2281/100 + 0.00101, lng: 16.3061/100 + 0.00101, msg: "Messaggio provvisorio appartamento 101 - punto 1"},
   {lat: 41.2281/100 + 0.00101, lng: 16.3061/100 + 0.00101, msg: "Messaggio provvisorio appartamento 101 - punto 2"},
@@ -1013,60 +1017,91 @@ apartments["314"] = [
   {lat: 41.23014/100 + 0.00314, lng: 16.30814/100 + 0.00314, msg: "Messaggio provvisorio appartamento 314 - punto 3"},
 ];
 
-function distance(lat1, lon1, lat2, lon2) {
-  const R = 6371e3;
-  const toRad = x => x * Math.PI / 180;
-  const φ1 = toRad(lat1), φ2 = toRad(lat2);
-  const Δφ = toRad(lat2 - lat1);
-  const Δλ = toRad(lon2 - lon1);
-  const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
 
-function speak(text) {
-  const utter = new SpeechSynthesisUtterance(text);
-  speechSynthesis.speak(utter);
-}
+    const receptionArea = {
+      name: "Area esterno reception",
+      coordinates: [
+        {lat: 39.851111, lng: 18.193389},
+        {lat: 39.851111, lng: 18.193500},
+        {lat: 39.850972, lng: 18.193500},
+        {lat: 39.850972, lng: 18.193417}
+      ],
+      msg: "Sei nell'area esterna reception, qui inizia il percorso"
+    };
 
-function startRoute() {
-  const apt = document.getElementById("aptNumber").value.trim();
-  if (!apartments[apt]) {
-    document.getElementById("output").innerText = "Appartamento non trovato!";
-    return;
-  }
+    function distance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const toRad = x => x * Math.PI / 180;
+      const φ1 = toRad(lat1), φ2 = toRad(lat2);
+      const Δφ = toRad(lat2 - lat1);
+      const Δλ = toRad(lon2 - lon1);
+      const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
 
-  checkpoints = apartments[apt];
-  currentStep = 0;
-  document.getElementById("inputDiv").style.display = "none";
-  document.getElementById("output").innerText = "Attiva GPS e segui le istruzioni...";
+    function speak(text) {
+      const utter = new SpeechSynthesisUtterance(text);
+      speechSynthesis.speak(utter);
+    }
 
-  if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(pos => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      document.getElementById("output").innerText = `Posizione attuale: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    function isPointInPolygon(point, polygon) {
+      let x = point.lat, y = point.lng;
+      let inside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        let xi = polygon[i].lat, yi = polygon[i].lng;
+        let xj = polygon[j].lat, yj = polygon[j].lng;
+        let intersect = ((yi > y) !== (yj > y)) &&
+                        (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
 
-      if (currentStep < checkpoints.length) {
-        const cp = checkpoints[currentStep];
-        const dist = distance(lat, lng, cp.lat, cp.lng);
-        if (dist < RADIUS) {
-          document.getElementById("output").innerText = cp.msg;
-          speak(cp.msg);
-          currentStep++;
-        }
-      } else {
-        document.getElementById("output").innerText = "Sei arrivato a destinazione!";
-        speak("Sei arrivato a destinazione!");
+    function startRoute() {
+      const apt = document.getElementById("aptNumber").value.trim();
+      if (!apartments[apt]) {
+        document.getElementById("output").innerText = "Appartamento non trovato!";
+        return;
       }
 
-    }, err => {
-      document.getElementById("output").innerText = "Errore GPS: " + err.message;
-    }, {enableHighAccuracy: true});
-  } else {
-    document.getElementById("output").innerText = "GPS non supportato.";
-  }
-}
-</script>
+      checkpoints = apartments[apt];
+      currentStep = 0;
+      document.getElementById("inputDiv").style.display = "none";
+      document.getElementById("output").innerText = "Attiva GPS e segui le istruzioni...";
+
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+
+          // Controllo area reception
+          if (isPointInPolygon({lat, lng}, receptionArea.coordinates)) {
+            document.getElementById("output").innerText = receptionArea.msg;
+            speak(receptionArea.msg);
+          }
+
+          // Controllo checkpoint appartamento
+          if (currentStep < checkpoints.length) {
+            const cp = checkpoints[currentStep];
+            const dist = distance(lat, lng, cp.lat, cp.lng);
+            if (dist < RADIUS) {
+              document.getElementById("output").innerText = cp.msg;
+              speak(cp.msg);
+              currentStep++;
+            }
+          } else if (currentStep >= checkpoints.length) {
+            document.getElementById("output").innerText = "Sei arrivato a destinazione!";
+            speak("Sei arrivato a destinazione!");
+          }
+
+        }, err => {
+          document.getElementById("output").innerText = "Errore GPS: " + err.message;
+        }, {enableHighAccuracy: true});
+      } else {
+        document.getElementById("output").innerText = "GPS non supportato.";
+      }
+    }
+  </script>
 </body>
 </html>
